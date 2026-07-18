@@ -71,19 +71,31 @@ function buildStyleString(theme: Theme): string {
 }`;
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeId, setThemeId] = React.useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(THEME_STORAGE_KEY) || themes[0].id;
-    }
-    return themes[0].id;
-  });
+function subscribeTheme(callback: () => void) {
+  const handler = () => callback();
+  window.addEventListener("theme-changed", handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener("theme-changed", handler);
+    window.removeEventListener("storage", handler);
+  };
+}
 
+function getThemeSnapshot() {
+  return localStorage.getItem(THEME_STORAGE_KEY) || themes[0].id;
+}
+
+function getThemeServerSnapshot() {
+  return themes[0].id;
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const themeId = React.useSyncExternalStore(subscribeTheme, getThemeSnapshot, getThemeServerSnapshot);
   const theme = React.useMemo(() => getThemeById(themeId), [themeId]);
 
   const setTheme = React.useCallback((id: string) => {
-    setThemeId(id);
     localStorage.setItem(THEME_STORAGE_KEY, id);
+    window.dispatchEvent(new Event("theme-changed"));
   }, []);
 
   React.useEffect(() => {
