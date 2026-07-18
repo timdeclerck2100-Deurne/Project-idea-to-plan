@@ -15,13 +15,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Roadmap, BuildPhase } from "@/lib/brief-schema";
 
-interface RoadmapCardProps {
+export interface RoadmapCardProps {
   roadmap: Roadmap;
   onChange: (roadmap: Roadmap) => void;
+  assistant?: React.ReactNode;
 }
 
 type ActiveDrag =
@@ -151,11 +152,13 @@ function BadgeChip({
       >
         {text}
         <button
+          type="button"
+          aria-label={`Remove ${badgeType} ${text}`}
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
           }}
-          className="ml-1 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover/chip:opacity-100"
+          className="ml-1 text-muted-foreground opacity-0 transition-colors hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/chip:opacity-100 group-focus-within/chip:opacity-100"
         >
           &times;
         </button>
@@ -220,7 +223,7 @@ function PhaseBadges({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       {phase.goals.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {phase.goals.map((text, i) => (
@@ -257,12 +260,12 @@ function PhaseBadges({
         </div>
       )}
 
-      <div className="flex gap-1.5">
+      <div className="flex min-w-0 flex-wrap gap-1.5">
         <Input
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
           placeholder="Add goal..."
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-36 flex-1 text-xs"
           onKeyDown={(e) => {
             if (e.key === "Enter" && newGoal.trim()) {
               e.preventDefault();
@@ -275,7 +278,7 @@ function PhaseBadges({
           value={newDeliverable}
           onChange={(e) => setNewDeliverable(e.target.value)}
           placeholder="Add deliverable..."
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-36 flex-1 text-xs"
           onKeyDown={(e) => {
             if (e.key === "Enter" && newDeliverable.trim()) {
               e.preventDefault();
@@ -334,18 +337,26 @@ function MilestoneCard({
     });
   };
 
+  const moveMilestone = (to: number) => {
+    onChange({
+      ...roadmap,
+      milestones: arrayMove(roadmap.milestones, index, to),
+    });
+  };
+
   return (
     <div
       ref={sortableRef}
       className={cn(
-        "rounded-xl border border-border/50 bg-card/30 p-3 transition-all duration-200",
+        "min-w-0 rounded-xl border border-border/50 bg-card/30 p-3 transition-all duration-200",
         isDragging_ && "opacity-40 scale-[0.98]",
         isDropTarget && "ring-2 ring-accent/30"
       )}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
         <div
           ref={handleRef}
+          aria-hidden="true"
           className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0"
         >
           <GripVertical className="h-4 w-4" />
@@ -357,12 +368,38 @@ function MilestoneCard({
           value={milestone.name}
           onChange={(e) => setName(e.target.value)}
           placeholder={`Milestone ${index + 1}`}
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-36 flex-1 text-xs"
         />
+        <div className="flex shrink-0 items-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Move ${milestone.name || `milestone ${index + 1}`} earlier`}
+            onClick={() => moveMilestone(index - 1)}
+            disabled={index === 0}
+            className="h-7 w-7 rounded-lg p-0"
+          >
+            <ArrowUp />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Move ${milestone.name || `milestone ${index + 1}`} later`}
+            onClick={() => moveMilestone(index + 1)}
+            disabled={index === total - 1}
+            className="h-7 w-7 rounded-lg p-0"
+          >
+            <ArrowDown />
+          </Button>
+        </div>
         {total > 1 && (
           <button
+            type="button"
+            aria-label={`Remove ${milestone.name || `milestone ${index + 1}`}`}
             onClick={remove}
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors shrink-0 px-1"
+            className="shrink-0 px-1 text-xs text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             &times;
           </button>
@@ -383,7 +420,7 @@ function MilestoneCard({
 
 /* ─── Roadmap Card ───────────────────────────────────────────────────────── */
 
-export function RoadmapCard({ roadmap, onChange }: RoadmapCardProps) {
+export function RoadmapCard({ roadmap, onChange, assistant }: RoadmapCardProps) {
   const [activeItem, setActiveItem] = React.useState<ActiveDrag>(null);
 
   const items = React.useMemo(() => buildItems(roadmap), [roadmap]);
@@ -452,12 +489,12 @@ export function RoadmapCard({ roadmap, onChange }: RoadmapCardProps) {
 
   return (
     <DragDropProvider onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <Card className="animate-fade-up">
+      <Card className="min-w-0 animate-fade-up">
         <CardHeader className="pb-3">
           <CardTitle>Roadmap</CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="min-w-0 space-y-4">
           {/* ── Initial Phase ─────────────────────── */}
           <div className="space-y-2">
             <div className="micro-label">Foundation</div>
@@ -521,6 +558,8 @@ export function RoadmapCard({ roadmap, onChange }: RoadmapCardProps) {
             <Plus className="h-3.5 w-3.5" />
             Add Milestone
           </Button>
+
+          {assistant && <div className="min-w-0">{assistant}</div>}
         </CardContent>
       </Card>
 

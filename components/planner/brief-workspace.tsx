@@ -8,6 +8,12 @@ import { PlannerProcessFlow } from "./planner-process-flow";
 import { MarkdownExportCard } from "./markdown-export-card";
 import { StarterPromptCard } from "./starter-prompt-card";
 import { RoadmapCard } from "./roadmap-card";
+import { AppNameEditor } from "./app-name-editor";
+import {
+  InlineCardAssistant,
+  type AssistantSectionId,
+  type BriefAssistantState,
+} from "./inline-card-assistant";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +23,24 @@ import type { ProjectBrief, Entity } from "@/lib/brief-schema";
 type TechStack = ProjectBrief["recommendedTechStack"];
 type PageRoute = ProjectBrief["pagesRoutes"][number];
 
-interface BriefWorkspaceProps {
+export interface BriefWorkspaceProps {
   brief: ProjectBrief;
   onBriefChange: (brief: ProjectBrief) => void;
   onUpdateExports?: () => void;
   isUpdatingExports?: boolean;
   onUpdateStarterPrompt?: (feedback: string) => void;
   isUpdatingStarterPrompt?: boolean;
+  onCommitName?: (name: string) => void;
+  onGenerateName?: () => void;
+  isGeneratingName?: boolean;
+  nameGenerationError?: string | null;
+  generatedNameSuggestion?: string | null;
+  onUseGeneratedName?: (name: string) => void;
+  onDismissGeneratedName?: () => void;
+  assistantStates?: Partial<Record<AssistantSectionId, BriefAssistantState>>;
+  onAskAssistant?: (sectionId: AssistantSectionId, prompt: string) => void;
+  onApplyAssistantSuggestion?: (sectionId: AssistantSectionId) => void;
+  onDismissAssistant?: (sectionId: AssistantSectionId) => void;
 }
 
 function ArrayEditor({
@@ -49,7 +66,7 @@ function ArrayEditor({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <div className="flex flex-wrap gap-1.5">
         {items.map((item, index) => (
           <Badge
@@ -63,12 +80,12 @@ function ArrayEditor({
           </Badge>
         ))}
       </div>
-      <div className="flex gap-1.5">
+      <div className="flex min-w-0 flex-wrap gap-1.5">
         <Input
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           placeholder={placeholder}
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-32 flex-1 text-xs"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -91,7 +108,7 @@ function TechStackEditor({
   const categories = Object.keys(stack) as (keyof TechStack)[];
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       {categories.map((category) => (
         <div key={category} className="space-y-0.5">
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
@@ -137,11 +154,11 @@ function PagesEditor({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       {pages.map((page, index) => (
         <div
           key={index}
-          className="flex items-center gap-1.5 text-xs bg-secondary/50 rounded px-2 py-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+          className="flex min-w-0 items-center gap-1.5 text-xs bg-secondary/50 rounded px-2 py-1 cursor-pointer hover:bg-destructive/20 transition-colors"
           onClick={() => removePage(index)}
         >
           <Badge variant="outline" className="text-[10px] font-mono">
@@ -151,24 +168,24 @@ function PagesEditor({
           <span className="text-muted-foreground text-[10px]">&times;</span>
         </div>
       ))}
-      <div className="flex gap-1.5">
+      <div className="flex min-w-0 flex-wrap gap-1.5">
         <Input
           value={path}
           onChange={(e) => setPath(e.target.value)}
           placeholder="/route"
-          className="h-7 text-xs w-20"
+          className="h-7 min-w-20 flex-1 text-xs sm:max-w-28"
         />
         <Input
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
           placeholder="Purpose"
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-32 flex-1 text-xs"
         />
         <Input
           value={components}
           onChange={(e) => setComponents(e.target.value)}
           placeholder="Components"
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-32 flex-1 text-xs"
         />
         <button
           onClick={addPage}
@@ -211,7 +228,7 @@ function EntityEditor({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       {entities.map((entity, index) => (
         <div
           key={index}
@@ -224,24 +241,24 @@ function EntityEditor({
           </div>
         </div>
       ))}
-      <div className="flex gap-1.5">
+      <div className="flex min-w-0 flex-wrap gap-1.5">
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Entity"
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-28 flex-1 text-xs"
         />
         <Input
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           placeholder="Description"
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-32 flex-1 text-xs"
         />
         <Input
           value={fieldsStr}
           onChange={(e) => setFieldsStr(e.target.value)}
           placeholder="field1, field2"
-          className="h-7 text-xs flex-1"
+          className="h-7 min-w-32 flex-1 text-xs"
         />
         <button
           onClick={addEntity}
@@ -261,21 +278,63 @@ export function BriefWorkspace({
   isUpdatingExports = false,
   onUpdateStarterPrompt,
   isUpdatingStarterPrompt = false,
+  onCommitName,
+  onGenerateName,
+  isGeneratingName = false,
+  nameGenerationError,
+  generatedNameSuggestion,
+  onUseGeneratedName,
+  onDismissGeneratedName,
+  assistantStates,
+  onAskAssistant,
+  onApplyAssistantSuggestion,
+  onDismissAssistant,
 }: BriefWorkspaceProps) {
+  const assistantFor = (sectionId: AssistantSectionId) => {
+    if (!onAskAssistant) return undefined;
+
+    return (
+      <InlineCardAssistant
+        sectionId={sectionId}
+        state={assistantStates?.[sectionId]}
+        onAsk={(prompt) => onAskAssistant(sectionId, prompt)}
+        onApplySuggestion={
+          onApplyAssistantSuggestion
+            ? () => onApplyAssistantSuggestion(sectionId)
+            : undefined
+        }
+        onDismiss={
+          onDismissAssistant ? () => onDismissAssistant(sectionId) : undefined
+        }
+      />
+    );
+  };
+
   return (
-    <div className="space-y-3 pb-8">
+    <div className="min-w-0 space-y-3 pb-8">
       {/* Row 0: App Name — full width */}
-      <div className="flex items-center gap-3">
-        <Input
-          value={brief.appName}
-          onChange={(e) => onBriefChange({ ...brief, appName: e.target.value })}
-          placeholder="App name"
-          className="font-display text-xl font-bold tracking-tight bg-transparent border-none shadow-none focus-visible:ring-0 h-auto py-0"
-        />
-      </div>
+      <AppNameEditor
+        name={brief.appName}
+        onCommitName={(name) =>
+          onCommitName ? onCommitName(name) : onBriefChange({ ...brief, appName: name })
+        }
+        onGenerateName={onGenerateName}
+        isGeneratingName={isGeneratingName}
+        generationError={nameGenerationError}
+        generatedSuggestion={generatedNameSuggestion}
+        onUseGeneratedName={(name) => {
+          if (onUseGeneratedName) onUseGeneratedName(name);
+          else onBriefChange({ ...brief, appName: name });
+        }}
+        onDismissGeneratedName={onDismissGeneratedName ?? (() => undefined)}
+      />
 
       {/* Row 1: App Summary — full width */}
-      <BriefSectionCard title="App Summary" eyebrow="Overview">
+      <BriefSectionCard
+        title="App Summary"
+        eyebrow="Overview"
+        assistant={assistantFor("appSummary")}
+      >
         <Textarea
           value={brief.appSummary}
           onChange={(e) =>
@@ -286,7 +345,7 @@ export function BriefWorkspace({
       </BriefSectionCard>
 
       {/* Row 2: Export cards — 2 columns */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
         {brief.markdownBrief && (
           <MarkdownExportCard markdown={brief.markdownBrief} isUpdating={isUpdatingExports} />
         )}
@@ -317,23 +376,42 @@ export function BriefWorkspace({
         </div>
       )}
 
-      {/* Row 3: Audience, Features, Recommended, Navigation — 4 columns */}
-      <div className="grid grid-cols-4 gap-3">
-        <BriefSectionCard title="Target Users" eyebrow="Audience">
+      {/* Roadmap: standalone full-width row */}
+      <RoadmapCard
+        roadmap={brief.buildPhases}
+        onChange={(buildPhases) => onBriefChange({ ...brief, buildPhases })}
+        assistant={assistantFor("buildPhases")}
+      />
+
+      {/* Content cards: 1 to 2 to 4 columns */}
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
+        <BriefSectionCard
+          title="Target Users"
+          eyebrow="Audience"
+          assistant={assistantFor("targetUsers")}
+        >
           <ArrayEditor
             items={brief.targetUsers}
             onChange={(targetUsers) => onBriefChange({ ...brief, targetUsers })}
           />
         </BriefSectionCard>
 
-        <BriefSectionCard title="Core Features" eyebrow="Features">
+        <BriefSectionCard
+          title="Core Features"
+          eyebrow="Features"
+          assistant={assistantFor("coreFeatures")}
+        >
           <ArrayEditor
             items={brief.coreFeatures}
             onChange={(coreFeatures) => onBriefChange({ ...brief, coreFeatures })}
           />
         </BriefSectionCard>
 
-        <BriefSectionCard title="Tech Stack" eyebrow="Recommended">
+        <BriefSectionCard
+          title="Tech Stack"
+          eyebrow="Recommended"
+          assistant={assistantFor("recommendedTechStack")}
+        >
           <TechStackEditor
             stack={brief.recommendedTechStack}
             onChange={(recommendedTechStack) =>
@@ -342,7 +420,11 @@ export function BriefWorkspace({
           />
         </BriefSectionCard>
 
-        <BriefSectionCard title="Pages & Routes" eyebrow="Navigation">
+        <BriefSectionCard
+          title="Pages & Routes"
+          eyebrow="Navigation"
+          assistant={assistantFor("pagesRoutes")}
+        >
           <PagesEditor
             pages={brief.pagesRoutes}
             onChange={(pagesRoutes) => onBriefChange({ ...brief, pagesRoutes })}
@@ -350,9 +432,13 @@ export function BriefWorkspace({
         </BriefSectionCard>
       </div>
 
-      {/* Row 4: Entities, Roadmap, Watch Out — 3 columns */}
-      <div className="grid grid-cols-3 gap-3">
-        <BriefSectionCard title="Data Model" eyebrow="Entities">
+      {/* Data model and risks remain balanced after roadmap extraction. */}
+      <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 [&>*]:min-w-0">
+        <BriefSectionCard
+          title="Data Model"
+          eyebrow="Entities"
+          assistant={assistantFor("dataModel")}
+        >
           <EntityEditor
             entities={brief.dataModel.entities}
             onChange={(entities) =>
@@ -364,12 +450,11 @@ export function BriefWorkspace({
           />
         </BriefSectionCard>
 
-        <RoadmapCard
-          roadmap={brief.buildPhases}
-          onChange={(buildPhases) => onBriefChange({ ...brief, buildPhases })}
-        />
-
-        <BriefSectionCard title="Risks & Edge Cases" eyebrow="Watch Out">
+        <BriefSectionCard
+          title="Risks & Edge Cases"
+          eyebrow="Watch Out"
+          assistant={assistantFor("risksEdgeCases")}
+        >
           <ArrayEditor
             items={brief.risksEdgeCases}
             onChange={(risksEdgeCases) =>
@@ -380,7 +465,7 @@ export function BriefWorkspace({
       </div>
 
       {/* Row 5: Data Model Graph + Planner Flow — 2 columns */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 [&>*]:min-w-0">
         <ExpandableGraphCard title="Data Model Graph" eyebrow="Visual">
           {(expanded) =>
             expanded ? (

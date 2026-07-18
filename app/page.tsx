@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { parsePartialJson } from "ai";
-import { briefOverviewSchema, type ProjectBrief } from "@/lib/brief-schema";
+import {
+  assistantSectionSchemas,
+  briefOverviewSchema,
+  starterPromptSchema,
+  type AssistantSection,
+  type BriefOverview,
+  type ProjectBrief,
+} from "@/lib/brief-schema";
+import { renameProjectBrief } from "@/lib/brief-transforms";
 import { generateMarkdownBrief } from "@/lib/planner-prompt";
 import { PlannerShell } from "@/components/planner/planner-shell";
 import { IdeaInput } from "@/components/planner/idea-input";
@@ -16,9 +24,62 @@ import { ClarifyingQuestions, type ClarifyingQuestion } from "@/components/plann
 import { Sparkles, RotateCcw, Square } from "lucide-react";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { ThemeSelector } from "@/components/theme-selector";
+import type { BriefAssistantState } from "@/components/planner/inline-card-assistant";
 
 const STORAGE_KEY_BASE_URL = "planner-base-url";
 const STORAGE_KEY_MODEL = "planner-model";
+
+type ContentAssistantSection = Exclude<AssistantSection, "appName">;
+
+type SectionAssistantState = BriefAssistantState & {
+  proposedValue?: unknown;
+  sourceSnapshot?: unknown;
+};
+
+type AssistantResponse = {
+  answer: string;
+  proposedValue: unknown;
+};
+
+async function readJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function responseError(data: unknown, fallback: string): string {
+  if (data && typeof data === "object" && "error" in data) {
+    const value = (data as { error?: unknown }).error;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return fallback;
+}
+
+function parseAssistantResponse(data: unknown): AssistantResponse {
+  if (!data || typeof data !== "object") {
+    throw new Error("The assistant returned an invalid response.");
+  }
+
+  const { answer, proposedValue } = data as {
+    answer?: unknown;
+    proposedValue?: unknown;
+  };
+  if (typeof answer !== "string" || !answer.trim()) {
+    throw new Error("The assistant returned an invalid response.");
+  }
+
+  return { answer, proposedValue };
+}
+
+function briefOverview(brief: ProjectBrief): BriefOverview {
+  return briefOverviewSchema.parse(brief);
+}
+
+function sameValue(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
 
 const emptyBrief: ProjectBrief = {
   appName: "",
@@ -62,7 +123,26 @@ export default function Home() {
   const [isGeneratingQuestions, setIsGeneratingQuestions] = React.useState(false);
   const [regeneratingIndex, setRegeneratingIndex] = React.useState<number | null>(null);
   const [isAddingQuestion, setIsAddingQuestion] = React.useState(false);
+  const [isGeneratingName, setIsGeneratingName] = React.useState(false);
+  const [nameGenerationError, setNameGenerationError] = React.useState<string | null>(null);
+  const [generatedNameSuggestion, setGeneratedNameSuggestion] = React.useState<string | null>(null);
+  const [assistantStates, setAssistantStates] = React.useState<
+    Partial<Record<ContentAssistantSection, SectionAssistantState>>
+  >({});
   const abortRef = React.useRef<AbortController | null>(null);
+  const briefRef = React.useRef(brief);
+  const nameRequestRef = React.useRef(0);
+  const nameSuggestionSourceRef = React.useRef<BriefOverview | null>(null);
+  const assistantRequestRefs = React.useRef<Partial<Record<ContentAssistantSection, number>>>({});
+
+  React.useEffect(() => {
+    briefRef.current = brief;
+  }, [brief]);
+
+  const handleBriefChange = React.useCallback((nextBrief: ProjectBrief) => {
+    briefRef.current = nextBrief;
+    setBrief(nextBrief);
+  }, []);
 
   const handleBaseUrlChange = React.useCallback((value: string) => {
     setBaseUrlRaw(value);
@@ -240,7 +320,7 @@ export default function Home() {
         );
       }
 
-      const validatedStarter = { starterPrompt: (finalStarter as { starterPrompt: string }).starterPrompt };
+      const validatedStarter = starterPromptSchema.parse(finalStarter);
       setBrief((prev) => ({ ...prev, ...validatedStarter }));
 
       // Step 3: Generate markdown brief client-side
@@ -371,38 +451,65 @@ export default function Home() {
   }, [idea, baseUrl, model, apiKey, questions]);
 
   const handleUpdateExports = React.useCallback(async () => {
-    if (!baseUrl.trim() || !model.trim() || !brief.appSummary) return;
+    if (!baseUrl.trim() || !model.trim() || !briefRef.current.appSummary) return;
 
+    const sourceBrief = structuredClone(briefRef.current);
     setIsUpdatingExports(true);
+    setError(undefined);
     try {
       const response = await fetch("/api/brief/update-exports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brief,
+          brief: sourceBrief,
           baseUrl: baseUrl.trim(),
           model: model.trim(),
           apiKey: apiKey || undefined,
         }),
       });
 
+      const result = await readJson(response);
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to update exports.");
+        throw new Error(responseError(result, "Failed to update exports."));
       }
 
-      const result = await response.json();
-      setBrief((prev) => ({
-        ...prev,
-        starterPrompt: result.starterPrompt,
-        markdownBrief: result.markdownBrief,
-      }));
+      const validatedStarter = starterPromptSchema.parse(result);
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !("markdownBrief" in result) ||
+        typeof result.markdownBrief !== "string"
+      ) {
+        throw new Error("The export response was invalid.");
+      }
+      const markdownBrief = result.markdownBrief;
+
+      if (!sameValue(briefRef.current, sourceBrief)) {
+        throw new Error(
+          "The brief changed while exports were being regenerated. Update exports again."
+        );
+      }
+
+      setBrief((current) => {
+        if (!sameValue(current, sourceBrief)) {
+          queueMicrotask(() => {
+            setError(
+              "The brief changed while exports were being regenerated. Update exports again."
+            );
+          });
+          return current;
+        }
+
+        const next = { ...current, ...validatedStarter, markdownBrief };
+        briefRef.current = next;
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update exports.");
     } finally {
       setIsUpdatingExports(false);
     }
-  }, [brief, baseUrl, model, apiKey]);
+  }, [baseUrl, model, apiKey]);
 
   const handleUpdateStarterPrompt = React.useCallback(async (feedback: string) => {
     if (!baseUrl.trim() || !model.trim() || !brief.appSummary) return;
@@ -447,7 +554,7 @@ export default function Home() {
 
       const { value: final, state } = await parsePartialJson(text);
       if (state === "successful-parse" || state === "repaired-parse") {
-        const validated = { starterPrompt: (final as { starterPrompt: string }).starterPrompt };
+        const validated = starterPromptSchema.parse(final);
         setBrief((prev) => ({ ...prev, ...validated }));
       } else {
         throw new Error("The starter prompt response could not be parsed.");
@@ -464,14 +571,284 @@ export default function Home() {
     }
   }, [brief, baseUrl, model, apiKey]);
 
+  const handleCommitName = React.useCallback((name: string) => {
+    nameRequestRef.current += 1;
+    nameSuggestionSourceRef.current = null;
+    setIsGeneratingName(false);
+    setGeneratedNameSuggestion(null);
+
+    const committedName = name.trim();
+    if (!committedName) {
+      setNameGenerationError("App name cannot be empty.");
+      return;
+    }
+
+    setNameGenerationError(null);
+    setBrief((current) => {
+      const next = renameProjectBrief(current, committedName);
+      briefRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const handleGenerateName = React.useCallback(async () => {
+    if (!baseUrl.trim() || !model.trim()) {
+      setNameGenerationError("Provider URL and model are required.");
+      return;
+    }
+
+    const requestId = nameRequestRef.current + 1;
+    const sourceOverview = structuredClone(briefOverview(briefRef.current));
+    nameRequestRef.current = requestId;
+    nameSuggestionSourceRef.current = null;
+    setIsGeneratingName(true);
+    setNameGenerationError(null);
+    setGeneratedNameSuggestion(null);
+
+    try {
+      const response = await fetch("/api/brief/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          section: "appName",
+          question: "Suggest one short, memorable alternative name suited to this brief.",
+          brief: sourceOverview,
+        }),
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(responseError(data, "Failed to generate an app name."));
+      }
+
+      const result = parseAssistantResponse(data);
+      const parsedName = assistantSectionSchemas.appName.safeParse(result.proposedValue);
+      if (!parsedName.success || !parsedName.data.trim()) {
+        throw new Error("The assistant did not provide a usable app name.");
+      }
+
+      if (nameRequestRef.current === requestId) {
+        if (!sameValue(briefOverview(briefRef.current), sourceOverview)) {
+          throw new Error(
+            "The brief changed while the name was being generated. Generate a new suggestion."
+          );
+        }
+        nameSuggestionSourceRef.current = sourceOverview;
+        setGeneratedNameSuggestion(parsedName.data.trim());
+      }
+    } catch (err) {
+      if (nameRequestRef.current === requestId) {
+        setNameGenerationError(
+          err instanceof Error ? err.message : "Failed to generate an app name."
+        );
+      }
+    } finally {
+      if (nameRequestRef.current === requestId) setIsGeneratingName(false);
+    }
+  }, [apiKey, baseUrl, model]);
+
+  const handleUseGeneratedName = React.useCallback((name: string) => {
+    const sourceOverview = nameSuggestionSourceRef.current;
+    if (
+      !sourceOverview ||
+      !sameValue(briefOverview(briefRef.current), sourceOverview)
+    ) {
+      nameRequestRef.current += 1;
+      nameSuggestionSourceRef.current = null;
+      setIsGeneratingName(false);
+      setGeneratedNameSuggestion(null);
+      setNameGenerationError(
+        "The brief changed after this name was suggested. Generate a new suggestion."
+      );
+      return;
+    }
+
+    handleCommitName(name);
+  }, [handleCommitName]);
+
+  const handleDismissGeneratedName = React.useCallback(() => {
+    nameRequestRef.current += 1;
+    nameSuggestionSourceRef.current = null;
+    setIsGeneratingName(false);
+    setNameGenerationError(null);
+    setGeneratedNameSuggestion(null);
+  }, []);
+
+  const handleAskAssistant = React.useCallback(async (
+    sectionId: ContentAssistantSection,
+    question: string
+  ) => {
+    if (!baseUrl.trim() || !model.trim()) {
+      setAssistantStates((current) => ({
+        ...current,
+        [sectionId]: {
+          isLoading: false,
+          error: "Provider URL and model are required.",
+          answer: null,
+          canApply: false,
+        },
+      }));
+      return;
+    }
+
+    const overview = briefOverview(briefRef.current);
+    const sourceSnapshot = structuredClone(overview[sectionId]);
+    const requestId = (assistantRequestRefs.current[sectionId] ?? 0) + 1;
+    assistantRequestRefs.current[sectionId] = requestId;
+    setAssistantStates((current) => ({
+      ...current,
+      [sectionId]: {
+        isLoading: true,
+        error: null,
+        answer: null,
+        canApply: false,
+        sourceSnapshot,
+      },
+    }));
+
+    try {
+      const response = await fetch("/api/brief/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          section: sectionId,
+          question,
+          brief: overview,
+        }),
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(responseError(data, "Failed to assist with this section."));
+      }
+
+      const result = parseAssistantResponse(data);
+      if (assistantRequestRefs.current[sectionId] !== requestId) return;
+
+      setAssistantStates((current) => ({
+        ...current,
+        [sectionId]: {
+          isLoading: false,
+          error: null,
+          answer: result.answer,
+          canApply: result.proposedValue != null,
+          proposedValue: result.proposedValue,
+          sourceSnapshot,
+        },
+      }));
+    } catch (err) {
+      if (assistantRequestRefs.current[sectionId] !== requestId) return;
+
+      setAssistantStates((current) => ({
+        ...current,
+        [sectionId]: {
+          isLoading: false,
+          error: err instanceof Error ? err.message : "Failed to assist with this section.",
+          answer: null,
+          canApply: false,
+          sourceSnapshot,
+        },
+      }));
+    }
+  }, [apiKey, baseUrl, model]);
+
+  const handleApplyAssistantSuggestion = React.useCallback((
+    sectionId: ContentAssistantSection
+  ) => {
+    const assistantState = assistantStates[sectionId];
+    if (!assistantState || assistantState.proposedValue == null) return;
+
+    const parsed = assistantSectionSchemas[sectionId].safeParse(
+      assistantState.proposedValue
+    );
+    if (!parsed.success) {
+      setAssistantStates((current) => ({
+        ...current,
+        [sectionId]: {
+          ...current[sectionId],
+          isLoading: false,
+          error: "The suggestion is invalid and cannot be applied.",
+          canApply: false,
+        },
+      }));
+      return;
+    }
+
+    const staleMessage = "This section changed after the suggestion was requested. Ask again before applying it.";
+    if (!sameValue(briefRef.current[sectionId], assistantState.sourceSnapshot)) {
+      setAssistantStates((current) => ({
+        ...current,
+        [sectionId]: {
+          ...current[sectionId],
+          isLoading: false,
+          error: staleMessage,
+          canApply: false,
+        },
+      }));
+      return;
+    }
+
+    setBrief((current) => {
+      if (!sameValue(current[sectionId], assistantState.sourceSnapshot)) {
+        queueMicrotask(() => {
+          setAssistantStates((states) => ({
+            ...states,
+            [sectionId]: {
+              ...states[sectionId],
+              isLoading: false,
+              error: staleMessage,
+              canApply: false,
+            },
+          }));
+        });
+        return current;
+      }
+
+      const next = { ...current, [sectionId]: parsed.data } as ProjectBrief;
+      briefRef.current = next;
+      return next;
+    });
+    setAssistantStates((current) => {
+      const next = { ...current };
+      delete next[sectionId];
+      return next;
+    });
+  }, [assistantStates]);
+
+  const handleDismissAssistant = React.useCallback((sectionId: ContentAssistantSection) => {
+    assistantRequestRefs.current[sectionId] =
+      (assistantRequestRefs.current[sectionId] ?? 0) + 1;
+    setAssistantStates((current) => {
+      const next = { ...current };
+      delete next[sectionId];
+      return next;
+    });
+  }, []);
+
   const handleReset = React.useCallback(() => {
     abortRef.current?.abort();
+    nameRequestRef.current += 1;
+    nameSuggestionSourceRef.current = null;
+    for (const sectionId of Object.keys(assistantRequestRefs.current) as ContentAssistantSection[]) {
+      assistantRequestRefs.current[sectionId] =
+        (assistantRequestRefs.current[sectionId] ?? 0) + 1;
+    }
     setBrief(emptyBrief);
     setStatus("idle");
     setProgress("");
     setSection("done");
     setError(undefined);
     setQuestions([]);
+    setIsGeneratingName(false);
+    setNameGenerationError(null);
+    setGeneratedNameSuggestion(null);
+    setAssistantStates({});
   }, []);
 
   const hasBrief = brief.appSummary !== "";
@@ -480,14 +857,14 @@ export default function Home() {
     <PlannerShell>
       {/* Top command bar */}
       <Card className="glass-panel rounded-xl px-4 py-3 mb-3 flex-shrink-0 animate-fade-up">
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row">
           {/* Left: App idea textarea (2/3) */}
-          <div className="w-2/3 min-w-0">
+          <div className="min-w-0 w-full lg:w-2/3">
             <IdeaInput value={idea} onChange={setIdea} disabled={status === "generating" || status === "questions"} />
           </div>
 
           {/* Right: Settings + actions (1/3) */}
-          <div className="w-1/3 flex flex-col gap-2">
+          <div className="flex min-w-0 w-full flex-col gap-2 lg:w-1/3">
             {/* Top line: provider fields */}
             <ProviderSettings
               baseUrl={baseUrl}
@@ -500,7 +877,7 @@ export default function Home() {
             />
 
             {/* Bottom line: theme + actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ThemeSelector />
               <Badge
                 variant={status === "generating" ? "accent" : status === "questions" ? "accent" : status === "error" ? "destructive" : "outline"}
@@ -511,7 +888,7 @@ export default function Home() {
                 {status === "done" && "Complete"}
                 {status === "error" && "Error"}
               </Badge>
-              <div className="flex-1" />
+              <div className="min-w-0 flex-1" />
               {(status === "generating" || (status === "questions" && !isGeneratingQuestions)) ? (
                 <Button
                   onClick={handleStop}
@@ -530,7 +907,7 @@ export default function Home() {
                 </Button>
               )}
               {status !== "idle" && (
-                <Button variant="outline" onClick={handleReset}>
+                <Button variant="outline" onClick={handleReset} aria-label="Reset planner">
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               )}
@@ -587,11 +964,22 @@ export default function Home() {
         <div className="flex-1 min-h-0 overflow-y-auto animate-fade-up">
           <BriefWorkspace
             brief={brief}
-            onBriefChange={setBrief}
+            onBriefChange={handleBriefChange}
             onUpdateExports={handleUpdateExports}
             isUpdatingExports={isUpdatingExports}
             onUpdateStarterPrompt={handleUpdateStarterPrompt}
             isUpdatingStarterPrompt={isUpdatingStarterPrompt}
+            onCommitName={handleCommitName}
+            onGenerateName={handleGenerateName}
+            isGeneratingName={isGeneratingName}
+            nameGenerationError={nameGenerationError}
+            generatedNameSuggestion={generatedNameSuggestion}
+            onUseGeneratedName={handleUseGeneratedName}
+            onDismissGeneratedName={handleDismissGeneratedName}
+            assistantStates={assistantStates}
+            onAskAssistant={handleAskAssistant}
+            onApplyAssistantSuggestion={handleApplyAssistantSuggestion}
+            onDismissAssistant={handleDismissAssistant}
           />
         </div>
       )}

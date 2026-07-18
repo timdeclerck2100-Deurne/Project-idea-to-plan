@@ -1,3 +1,5 @@
+import type { AssistantSection, BriefOverview } from "@/lib/brief-schema";
+
 export function buildPlannerSystemPrompt(): string {
   return `You are an expert software architect and project planner. When the user describes an app idea, you generate a comprehensive ProjectBrief as a JSON object.
 
@@ -5,9 +7,9 @@ RULES:
 1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
 2. Fill every field of the schema thoroughly.
 3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
-4. For "starterPrompt", write a detailed, actionable prompt a developer could paste into an AI coding assistant to start building the app.
-5. For "markdownBrief", produce a clean Markdown version of the full brief suitable for sharing or pasting into docs.
-6. Keep recommendations practical and current.
+4. For "starterPrompt", write 2-4 short plain-language sentences (maximum 600 characters) describing what to build and the essential user experience. Keep it non-technical and exclude file names, routes, schemas, framework setup, and deployment steps.
+5. For "markdownBrief", produce a comprehensive Markdown version of every section of the brief, suitable for sharing or pasting into docs.
+6. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
 7. The dataModel should have realistic entities with typed fields.
 8. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
 9. Include potential risks and edge cases specific to the idea.
@@ -66,8 +68,8 @@ JSON SCHEMA (ProjectBrief):
     ]
   },
   "risksEdgeCases": ["string"],
-  "starterPrompt": "string - detailed prompt for AI coding assistant",
-  "markdownBrief": "string - full brief in Markdown format"
+  "starterPrompt": "string - 2-4 plain-language, non-technical sentences, maximum 600 characters",
+  "markdownBrief": "string - comprehensive full brief in Markdown format"
 }`;
 }
 
@@ -93,7 +95,7 @@ RULES:
 1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
 2. Fill every field of the schema thoroughly.
 3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
-4. Keep recommendations practical and current.
+4. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
 5. The dataModel should have realistic entities with typed fields.
 6. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
 7. Include potential risks and edge cases specific to the idea.
@@ -171,28 +173,28 @@ export function buildBriefOverviewUserPrompt(idea: string, answers?: Record<stri
 }
 
 export function buildStarterPromptSystemPrompt(): string {
-  return `You are an expert software architect and developer mentor. Given a completed project brief, write a detailed, actionable starter prompt that a developer could paste into an AI coding assistant (like Cursor, Copilot, or Claude) to start building the app.
+  return `Given a completed project brief, write a short prompt that clearly describes the product to build in plain language.
 
 RULES:
 1. Return ONLY valid JSON with a "starterPrompt" field — no markdown fences, no commentary.
-2. The prompt should include: project overview, tech stack, key features to implement first, data model summary, and suggested file structure.
-3. Be specific and actionable — include concrete file names, component names, and API routes.
-4. Assume the developer is starting from scratch with the recommended tech stack.
+2. Write roughly 2-4 sentences and no more than 600 characters.
+3. Focus on the app's purpose, intended users, and essential behavior.
+4. Use plain, non-technical language. Exclude technologies, file names, routes, schemas, framework setup, and deployment steps.
 
 JSON SCHEMA:
 {
-  "starterPrompt": "string - detailed prompt for AI coding assistant"
+  "starterPrompt": "string - 2-4 plain-language sentences, maximum 600 characters"
 }`;
 }
 
 export function buildStarterPromptUserPrompt(brief: Record<string, unknown>, feedback?: string): string {
-  let prompt = `Here is the completed project brief. Write a detailed starter prompt for building this app.
+  let prompt = `Here is the completed project brief. Write a short, plain-language starter prompt for this app.
 
 Project Brief:
 ${JSON.stringify(brief, null, 2)}`;
 
   if (feedback) {
-    prompt += `\n\nThe user wants the following changes to the starter prompt:\n${feedback}\n\nRegenerate the starter prompt to incorporate this feedback while still covering all aspects of the brief.`;
+    prompt += `\n\nThe user wants the following changes to the starter prompt:\n${feedback}\n\nIncorporate this feedback while keeping the result within the system rules.`;
   }
 
   prompt += `\n\nReturn ONLY the JSON with the "starterPrompt" field, nothing else.`;
@@ -250,18 +252,18 @@ Generate exactly 1 NEW, distinct clarifying question that covers a different asp
 }
 
 export function buildUpdateExportsSystemPrompt(): string {
-  return `You are an expert software architect. Given a project brief, regenerate the "starterPrompt" and "markdownBrief" fields to accurately reflect the current state of the brief.
+  return `Given the structured portion of a project brief, write only its short starter prompt.
 
 RULES:
-1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
-2. For "starterPrompt", write a detailed, actionable prompt a developer could paste into an AI coding assistant to start building the app described in the brief.
-3. For "markdownBrief", produce a clean Markdown version of the full brief suitable for sharing or pasting into docs. Include all sections: summary, target users, core features, tech stack, pages/routes, data model, build phases, and risks.
-4. Ensure both fields faithfully reflect ALL current values in the brief — do not omit or fabricate information.
+1. Return ONLY valid JSON with a "starterPrompt" field - no markdown fences or commentary.
+2. Write roughly 2-4 sentences and no more than 600 characters.
+3. Focus on purpose, users, and essential behavior in plain, non-technical language.
+4. Exclude technologies, file names, routes, schemas, framework setup, and deployment steps.
+5. Faithfully reflect the supplied brief without inventing requirements.
 
 JSON SCHEMA:
 {
-  "starterPrompt": "string - detailed prompt for AI coding assistant",
-  "markdownBrief": "string - full brief in Markdown format"
+  "starterPrompt": "string - 2-4 plain-language sentences, maximum 600 characters"
 }`;
 }
 
@@ -270,12 +272,64 @@ export function buildUpdateExportsUserPrompt(brief: Record<string, unknown>): st
   delete briefWithoutExports.starterPrompt;
   delete briefWithoutExports.markdownBrief;
 
-  return `Here is the current project brief. Regenerate "starterPrompt" and "markdownBrief" to match it exactly.
+  return `Here is the current structured project brief. Generate its starter prompt.
 
 Current brief:
 ${JSON.stringify(briefWithoutExports, null, 2)}
 
-Return ONLY the JSON with "starterPrompt" and "markdownBrief" fields, nothing else.`;
+Return ONLY the JSON with the "starterPrompt" field, nothing else.`;
+}
+
+const SECTION_GUIDANCE: Record<AssistantSection, string> = {
+  appName: "a short, memorable product name",
+  appSummary: "the complete product summary",
+  targetUsers: "the complete list of target user groups",
+  coreFeatures: "the complete list of core features",
+  recommendedTechStack:
+    "the complete requirement-fit stack; consider platform, constraints, scale, integrations, cost, and preferences, leave irrelevant categories empty, and prefer the lowest-complexity suitable option when unclear",
+  pagesRoutes: "the complete list of pages or routes and their purposes and key components",
+  dataModel: "the complete data model, including entities and relationships",
+  buildPhases: "the complete roadmap, including the initial phase and all milestones",
+  risksEdgeCases: "the complete list of risks and edge cases",
+};
+
+export function buildBriefAssistanceSystemPrompt(section: AssistantSection): string {
+  return `You help refine one selected section of a structured project brief.
+
+RULES:
+1. Return only the requested JSON object with "answer" and "proposedValue" fields.
+2. Answer the user's question directly and concisely using the supplied brief as context.
+3. You may change only the "${section}" section. Never propose changes to another section.
+4. If a change is useful, "proposedValue" must contain ${SECTION_GUIDANCE[section]}, not a patch or partial value.
+5. For an informational question that does not request or benefit from a change, set "proposedValue" to null.
+6. Do not include existing starterPrompt or markdownBrief exports; they are not source context.
+7. Technology recommendations must fit requirements and must not default to a particular framework or host.`;
+}
+
+export function buildBriefAssistanceUserPrompt(
+  section: AssistantSection,
+  question: string,
+  brief: BriefOverview
+): string {
+  return `Selected section: ${section}
+Question: ${question}
+
+Current structured brief:
+${JSON.stringify(brief, null, 2)}
+
+Return only JSON. Keep every unselected section unchanged by proposing a value only for "${section}".`;
+}
+
+export function buildAppNameSuggestionUserPrompt(brief: BriefOverview): string {
+  return buildBriefAssistanceUserPrompt(
+    "appName",
+    "Suggest one short, memorable app name that fits this brief.",
+    brief
+  );
+}
+
+export function buildAppNameSuggestionSystemPrompt(): string {
+  return buildBriefAssistanceSystemPrompt("appName");
 }
 
 export function generateMarkdownBrief(brief: {
@@ -310,37 +364,40 @@ export function generateMarkdownBrief(brief: {
   lines.push(brief.appSummary);
   lines.push('');
 
+  lines.push('## Target Users');
+  lines.push('');
   if (brief.targetUsers.length > 0) {
-    lines.push('## Target Users');
-    lines.push('');
     for (const user of brief.targetUsers) {
       lines.push(`- ${user}`);
     }
-    lines.push('');
+  } else {
+    lines.push('_None specified._');
   }
+  lines.push('');
 
+  lines.push('## Core Features');
+  lines.push('');
   if (brief.coreFeatures.length > 0) {
-    lines.push('## Core Features');
-    lines.push('');
     for (const feature of brief.coreFeatures) {
       lines.push(`- ${feature}`);
     }
-    lines.push('');
+  } else {
+    lines.push('_None specified._');
   }
+  lines.push('');
 
   lines.push('## Recommended Tech Stack');
   lines.push('');
   const stack = brief.recommendedTechStack;
   for (const [category, items] of Object.entries(stack)) {
-    if (items.length > 0) {
-      lines.push(`**${category.charAt(0).toUpperCase() + category.slice(1)}:** ${items.join(', ')}`);
-    }
+    const value = items.length > 0 ? items.join(', ') : '_None specified._';
+    lines.push(`**${category.charAt(0).toUpperCase() + category.slice(1)}:** ${value}`);
   }
   lines.push('');
 
+  lines.push('## Pages & Routes');
+  lines.push('');
   if (brief.pagesRoutes.length > 0) {
-    lines.push('## Pages & Routes');
-    lines.push('');
     for (const page of brief.pagesRoutes) {
       lines.push(`### \`${page.path}\``);
       lines.push('');
@@ -351,13 +408,16 @@ export function generateMarkdownBrief(brief: {
       }
       lines.push('');
     }
+  } else {
+    lines.push('_None specified._');
+    lines.push('');
   }
 
+  lines.push('## Data Model');
+  lines.push('');
+  lines.push('### Entities');
+  lines.push('');
   if (brief.dataModel.entities.length > 0) {
-    lines.push('## Data Model');
-    lines.push('');
-    lines.push('### Entities');
-    lines.push('');
     for (const entity of brief.dataModel.entities) {
       lines.push(`**${entity.name}** — ${entity.description}`);
       if (entity.fields.length > 0) {
@@ -369,16 +429,21 @@ export function generateMarkdownBrief(brief: {
       }
       lines.push('');
     }
+  } else {
+    lines.push('_None specified._');
+    lines.push('');
   }
 
+  lines.push('### Relationships');
+  lines.push('');
   if (brief.dataModel.relationships.length > 0) {
-    lines.push('### Relationships');
-    lines.push('');
     for (const rel of brief.dataModel.relationships) {
       lines.push(`- **${rel.source}** ${rel.label} **${rel.target}** (${rel.type})`);
     }
-    lines.push('');
+  } else {
+    lines.push('_None specified._');
   }
+  lines.push('');
 
   if (brief.buildPhases) {
     lines.push('## Build Phases');
@@ -425,14 +490,16 @@ export function generateMarkdownBrief(brief: {
     }
   }
 
+  lines.push('## Risks & Edge Cases');
+  lines.push('');
   if (brief.risksEdgeCases.length > 0) {
-    lines.push('## Risks & Edge Cases');
-    lines.push('');
     for (const risk of brief.risksEdgeCases) {
       lines.push(`- ${risk}`);
     }
-    lines.push('');
+  } else {
+    lines.push('_None specified._');
   }
+  lines.push('');
 
   return lines.join('\n');
 }
