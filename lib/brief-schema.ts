@@ -31,6 +31,11 @@ export const buildPhaseSchema = z.object({
   deliverables: z.array(z.string()),
 });
 
+export const roadmapSchema = z.object({
+  initialPhase: buildPhaseSchema,
+  milestones: z.array(buildPhaseSchema),
+});
+
 export const briefOverviewSchema = z.object({
   appName: z.string(),
   appSummary: z.string(),
@@ -48,7 +53,7 @@ export const briefOverviewSchema = z.object({
     entities: z.array(entitySchema),
     relationships: z.array(relationshipSchema),
   }),
-  buildPhases: z.array(buildPhaseSchema),
+  buildPhases: roadmapSchema,
   risksEdgeCases: z.array(z.string()),
 });
 
@@ -67,4 +72,5 @@ export type Entity = z.infer<typeof entitySchema>;
 export type Relationship = z.infer<typeof relationshipSchema>;
 export type PageRoute = z.infer<typeof pageRouteSchema>;
 export type BuildPhase = z.infer<typeof buildPhaseSchema>;
+export type Roadmap = z.infer<typeof roadmapSchema>;
 export type ProjectBrief = z.infer<typeof projectBriefSchema>;

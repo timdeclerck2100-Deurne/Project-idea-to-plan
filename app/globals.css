@@ -245,3 +245,14 @@ body {
 .animate-scale-in {
   animation: scale-in 0.35s ease-out both;
 }
+
+/* Roadmap drag-and-drop styles */
+.roadmap-drop-active {
+  background: oklch(0.79 0.16 178 / 8%);
+  border: 1px dashed oklch(0.79 0.16 178 / 40%);
+}
+
+.roadmap-dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}

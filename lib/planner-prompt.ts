@@ -9,7 +9,7 @@ RULES:
 5. For "markdownBrief", produce a clean Markdown version of the full brief suitable for sharing or pasting into docs.
 6. Keep recommendations practical and current.
 7. The dataModel should have realistic entities with typed fields.
-8. The buildPhases should be ordered from foundation to polish.
+8. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
 9. Include potential risks and edge cases specific to the idea.
 
 JSON SCHEMA (ProjectBrief):
@@ -51,13 +51,20 @@ JSON SCHEMA (ProjectBrief):
       }
     ]
   },
-  "buildPhases": [
-    {
-      "name": "string",
+  "buildPhases": {
+    "initialPhase": {
+      "name": "string - e.g. 'Core Foundation'",
       "goals": ["string"],
       "deliverables": ["string"]
-    }
-  ],
+    },
+    "milestones": [
+      {
+        "name": "string - descriptive name like 'User Authentication' or 'Payment Integration'",
+        "goals": ["string"],
+        "deliverables": ["string"]
+      }
+    ]
+  },
   "risksEdgeCases": ["string"],
   "starterPrompt": "string - detailed prompt for AI coding assistant",
   "markdownBrief": "string - full brief in Markdown format"
@@ -88,7 +95,7 @@ RULES:
 3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
 4. Keep recommendations practical and current.
 5. The dataModel should have realistic entities with typed fields.
-6. The buildPhases should be ordered from foundation to polish.
+6. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
 7. Include potential risks and edge cases specific to the idea.
 
 JSON SCHEMA (BriefOverview):
@@ -130,13 +137,20 @@ JSON SCHEMA (BriefOverview):
       }
     ]
   },
-  "buildPhases": [
-    {
-      "name": "string",
+  "buildPhases": {
+    "initialPhase": {
+      "name": "string - e.g. 'Core Foundation'",
       "goals": ["string"],
       "deliverables": ["string"]
-    }
-  ],
+    },
+    "milestones": [
+      {
+        "name": "string - descriptive name like 'User Authentication' or 'Payment Integration'",
+        "goals": ["string"],
+        "deliverables": ["string"]
+      }
+    ]
+  },
   "risksEdgeCases": ["string"]
 }`;
 }
@@ -281,7 +295,10 @@ export function generateMarkdownBrief(brief: {
     entities: { name: string; description: string; fields: { name: string; type: string; description?: string }[] }[];
     relationships: { source: string; target: string; label: string; type: string }[];
   };
-  buildPhases: { name: string; goals: string[]; deliverables: string[] }[];
+  buildPhases: {
+    initialPhase: { name: string; goals: string[]; deliverables: string[] };
+    milestones: { name: string; goals: string[]; deliverables: string[] }[];
+  };
   risksEdgeCases: string[];
 }): string {
   const lines: string[] = [];
@@ -363,26 +380,48 @@ export function generateMarkdownBrief(brief: {
     lines.push('');
   }
 
-  if (brief.buildPhases.length > 0) {
+  if (brief.buildPhases) {
     lines.push('## Build Phases');
     lines.push('');
-    for (const phase of brief.buildPhases) {
-      lines.push(`### ${phase.name}`);
+    const { initialPhase, milestones } = brief.buildPhases;
+    if (initialPhase) {
+      lines.push(`### Initial Phase: ${initialPhase.name}`);
       lines.push('');
-      if (phase.goals.length > 0) {
+      if (initialPhase.goals.length > 0) {
         lines.push('**Goals:**');
-        for (const goal of phase.goals) {
+        for (const goal of initialPhase.goals) {
           lines.push(`- ${goal}`);
         }
       }
-      if (phase.deliverables.length > 0) {
+      if (initialPhase.deliverables.length > 0) {
         lines.push('');
         lines.push('**Deliverables:**');
-        for (const del of phase.deliverables) {
+        for (const del of initialPhase.deliverables) {
           lines.push(`- ${del}`);
         }
       }
       lines.push('');
+    }
+    if (milestones && milestones.length > 0) {
+      for (let i = 0; i < milestones.length; i++) {
+        const milestone = milestones[i];
+        lines.push(`### Milestone ${i + 1}: ${milestone.name}`);
+        lines.push('');
+        if (milestone.goals.length > 0) {
+          lines.push('**Goals:**');
+          for (const goal of milestone.goals) {
+            lines.push(`- ${goal}`);
+          }
+        }
+        if (milestone.deliverables.length > 0) {
+          lines.push('');
+          lines.push('**Deliverables:**');
+          for (const del of milestone.deliverables) {
+            lines.push(`- ${del}`);
+          }
+        }
+        lines.push('');
+      }
     }
   }
 

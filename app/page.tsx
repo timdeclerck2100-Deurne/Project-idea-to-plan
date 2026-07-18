@@ -37,7 +37,10 @@ const emptyBrief: ProjectBrief = {
     entities: [],
     relationships: [],
   },
-  buildPhases: [],
+  buildPhases: {
+    initialPhase: { name: "", goals: [], deliverables: [] },
+    milestones: [],
+  },
   risksEdgeCases: [],
   starterPrompt: "",
   markdownBrief: "",

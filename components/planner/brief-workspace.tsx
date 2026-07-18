@@ -7,6 +7,7 @@ import { DataModelFlow } from "./data-model-flow";
 import { PlannerProcessFlow } from "./planner-process-flow";
 import { MarkdownExportCard } from "./markdown-export-card";
 import { StarterPromptCard } from "./starter-prompt-card";
+import { RoadmapCard } from "./roadmap-card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -253,81 +254,6 @@ function EntityEditor({
   );
 }
 
-function BuildPhasesEditor({
-  phases,
-  onChange,
-}: {
-  phases: ProjectBrief["buildPhases"];
-  onChange: (phases: ProjectBrief["buildPhases"]) => void;
-}) {
-  const [name, setName] = React.useState("");
-  const [goals, setGoals] = React.useState("");
-  const [deliverables, setDeliverables] = React.useState("");
-
-  const addPhase = () => {
-    if (name.trim()) {
-      onChange([
-        ...phases,
-        {
-          name: name.trim(),
-          goals: goals.split(",").map((g) => g.trim()).filter(Boolean),
-          deliverables: deliverables.split(",").map((d) => d.trim()).filter(Boolean),
-        },
-      ]);
-      setName("");
-      setGoals("");
-      setDeliverables("");
-    }
-  };
-
-  const removePhase = (index: number) => {
-    onChange(phases.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div className="space-y-1.5">
-      {phases.map((phase, index) => (
-        <div
-          key={index}
-          className="text-sm bg-secondary/50 rounded px-2 py-1.5 cursor-pointer hover:bg-destructive/20 transition-colors"
-          onClick={() => removePhase(index)}
-        >
-          <div className="font-medium">{phase.name}</div>
-          <div className="text-muted-foreground text-xs">
-            {phase.goals.join(", ")}
-          </div>
-        </div>
-      ))}
-      <div className="flex gap-1.5">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Phase name"
-          className="h-7 text-xs flex-1"
-        />
-        <Input
-          value={goals}
-          onChange={(e) => setGoals(e.target.value)}
-          placeholder="Goals"
-          className="h-7 text-xs flex-1"
-        />
-        <Input
-          value={deliverables}
-          onChange={(e) => setDeliverables(e.target.value)}
-          placeholder="Deliverables"
-          className="h-7 text-xs flex-1"
-        />
-        <button
-          onClick={addPhase}
-          className="h-7 px-2 text-xs bg-secondary hover:bg-secondary/80 rounded transition-colors"
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function BriefWorkspace({
   brief,
   onBriefChange,
@@ -438,12 +364,10 @@ export function BriefWorkspace({
           />
         </BriefSectionCard>
 
-        <BriefSectionCard title="Build Phases" eyebrow="Roadmap">
-          <BuildPhasesEditor
-            phases={brief.buildPhases}
-            onChange={(buildPhases) => onBriefChange({ ...brief, buildPhases })}
-          />
-        </BriefSectionCard>
+        <RoadmapCard
+          roadmap={brief.buildPhases}
+          onChange={(buildPhases) => onBriefChange({ ...brief, buildPhases })}
+        />
 
         <BriefSectionCard title="Risks & Edge Cases" eyebrow="Watch Out">
           <ArrayEditor
