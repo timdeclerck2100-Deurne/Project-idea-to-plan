@@ -521,6 +521,18 @@ export function RoadmapCard({ roadmap, onChange, assistant }: RoadmapCardProps) 
                   onChange={onChange}
                 />
               </BadgeDropZone>
+              {roadmap.milestones.map((ms, i) =>
+                i % 2 === 1 ? (
+                  <MilestoneCard
+                    key={i}
+                    milestone={ms}
+                    index={i}
+                    total={roadmap.milestones.length}
+                    roadmap={roadmap}
+                    onChange={onChange}
+                  />
+                ) : null
+              )}
             </div>
 
             {/* ── Milestones ───────────────────────── */}
@@ -528,16 +540,18 @@ export function RoadmapCard({ roadmap, onChange, assistant }: RoadmapCardProps) 
               <div className="micro-label">Milestones</div>
               {roadmap.milestones.length > 0 && (
                 <div className="space-y-2">
-                  {roadmap.milestones.map((ms, i) => (
-                    <MilestoneCard
-                      key={i}
-                      milestone={ms}
-                      index={i}
-                      total={roadmap.milestones.length}
-                      roadmap={roadmap}
-                      onChange={onChange}
-                    />
-                  ))}
+                  {roadmap.milestones.map((ms, i) =>
+                    i % 2 === 0 ? (
+                      <MilestoneCard
+                        key={i}
+                        milestone={ms}
+                        index={i}
+                        total={roadmap.milestones.length}
+                        roadmap={roadmap}
+                        onChange={onChange}
+                      />
+                    ) : null
+                  )}
                 </div>
               )}
               <Button
