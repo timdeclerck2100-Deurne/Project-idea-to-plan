@@ -28,6 +28,8 @@ import type { BriefAssistantState } from "@/components/planner/inline-card-assis
 
 const STORAGE_KEY_BASE_URL = "planner-base-url";
 const STORAGE_KEY_MODEL = "planner-model";
+const MAX_DISMISSED_NAMES = 20;
+const MAX_NAME_GENERATION_ATTEMPTS = 3;
 
 type ContentAssistantSection = Exclude<AssistantSection, "appName">;
 
@@ -79,6 +81,22 @@ function briefOverview(brief: ProjectBrief): BriefOverview {
 
 function sameValue(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function normalizeGeneratedName(name: string): string {
+  return name.trim().normalize("NFKC").toLowerCase();
+}
+
+function nameGenerationQuestion(exclusions: string[]): string {
+  const listedExclusions = exclusions
+    .slice(-(MAX_DISMISSED_NAMES + MAX_NAME_GENERATION_ATTEMPTS))
+    .map((name) => name.replace(/\s+/g, " ").trim().slice(0, 24));
+
+  return [
+    "Suggest one short, memorable alternative name suited to this brief.",
+    "Never return any of these excluded names, including case or Unicode variants:",
+    listedExclusions.length > 0 ? listedExclusions.join("; ") : "(none)",
+  ].join("\n");
 }
 
 const emptyBrief: ProjectBrief = {
@@ -133,6 +151,7 @@ export default function Home() {
   const briefRef = React.useRef(brief);
   const nameRequestRef = React.useRef(0);
   const nameSuggestionSourceRef = React.useRef<BriefOverview | null>(null);
+  const dismissedGeneratedNamesRef = React.useRef<string[]>([]);
   const assistantRequestRefs = React.useRef<Partial<Record<ContentAssistantSection, number>>>({});
 
   React.useEffect(() => {
@@ -209,6 +228,7 @@ export default function Home() {
     setStatus("generating");
     setProgress("Connecting to provider...");
     setError(undefined);
+    dismissedGeneratedNamesRef.current = [];
     setBrief(emptyBrief);
     setSection("overview");
 
@@ -605,40 +625,56 @@ export default function Home() {
     setNameGenerationError(null);
     setGeneratedNameSuggestion(null);
 
+    const requestExclusions = [...dismissedGeneratedNamesRef.current];
+
     try {
-      const response = await fetch("/api/brief/assist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: baseUrl.trim(),
-          model: model.trim(),
-          apiKey: apiKey || undefined,
-          section: "appName",
-          question: "Suggest one short, memorable alternative name suited to this brief.",
-          brief: sourceOverview,
-        }),
-      });
-      const data = await readJson(response);
+      for (let attempt = 0; attempt < MAX_NAME_GENERATION_ATTEMPTS; attempt += 1) {
+        const response = await fetch("/api/brief/assist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseUrl: baseUrl.trim(),
+            model: model.trim(),
+            apiKey: apiKey || undefined,
+            section: "appName",
+            question: nameGenerationQuestion(requestExclusions),
+            brief: sourceOverview,
+          }),
+        });
+        const data = await readJson(response);
 
-      if (!response.ok) {
-        throw new Error(responseError(data, "Failed to generate an app name."));
-      }
+        if (!response.ok) {
+          throw new Error(responseError(data, "Failed to generate an app name."));
+        }
 
-      const result = parseAssistantResponse(data);
-      const parsedName = assistantSectionSchemas.appName.safeParse(result.proposedValue);
-      if (!parsedName.success || !parsedName.data.trim()) {
-        throw new Error("The assistant did not provide a usable app name.");
-      }
+        const result = parseAssistantResponse(data);
+        const parsedName = assistantSectionSchemas.appName.safeParse(result.proposedValue);
+        if (!parsedName.success || !parsedName.data.trim()) {
+          throw new Error("The assistant did not provide a usable app name.");
+        }
 
-      if (nameRequestRef.current === requestId) {
+        if (nameRequestRef.current !== requestId) return;
         if (!sameValue(briefOverview(briefRef.current), sourceOverview)) {
           throw new Error(
             "The brief changed while the name was being generated. Generate a new suggestion."
           );
         }
+
+        const candidate = parsedName.data.trim();
+        const normalizedCandidate = normalizeGeneratedName(candidate);
+        if (requestExclusions.some((name) => normalizeGeneratedName(name) === normalizedCandidate)) {
+          requestExclusions.push(candidate);
+          continue;
+        }
+
         nameSuggestionSourceRef.current = sourceOverview;
-        setGeneratedNameSuggestion(parsedName.data.trim());
+        setGeneratedNameSuggestion(candidate);
+        return;
       }
+
+      throw new Error(
+        "The assistant repeatedly returned a dismissed app name. Try generating another suggestion."
+      );
     } catch (err) {
       if (nameRequestRef.current === requestId) {
         setNameGenerationError(
@@ -670,12 +706,22 @@ export default function Home() {
   }, [handleCommitName]);
 
   const handleDismissGeneratedName = React.useCallback(() => {
+    const dismissedName = generatedNameSuggestion?.trim();
+    if (dismissedName) {
+      const normalizedDismissedName = normalizeGeneratedName(dismissedName);
+      dismissedGeneratedNamesRef.current = [
+        ...dismissedGeneratedNamesRef.current.filter(
+          (name) => normalizeGeneratedName(name) !== normalizedDismissedName
+        ),
+        dismissedName,
+      ].slice(-MAX_DISMISSED_NAMES);
+    }
     nameRequestRef.current += 1;
     nameSuggestionSourceRef.current = null;
     setIsGeneratingName(false);
     setNameGenerationError(null);
     setGeneratedNameSuggestion(null);
-  }, []);
+  }, [generatedNameSuggestion]);
 
   const handleAskAssistant = React.useCallback(async (
     sectionId: ContentAssistantSection,
@@ -835,6 +881,7 @@ export default function Home() {
     abortRef.current?.abort();
     nameRequestRef.current += 1;
     nameSuggestionSourceRef.current = null;
+    dismissedGeneratedNamesRef.current = [];
     for (const sectionId of Object.keys(assistantRequestRefs.current) as ContentAssistantSection[]) {
       assistantRequestRefs.current[sectionId] =
         (assistantRequestRefs.current[sectionId] ?? 0) + 1;

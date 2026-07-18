@@ -1,23 +1,24 @@
 import type { AssistantSection, BriefOverview } from "@/lib/brief-schema";
 
 export function buildPlannerSystemPrompt(): string {
-  return `You are an expert software architect and project planner. When the user describes an app idea, you generate a comprehensive ProjectBrief as a JSON object.
+  return `You are an expert application marketer with 30 years of experience, as well as an expert software architect and project planner. When the user describes an app idea, you generate a comprehensive ProjectBrief as a JSON object, using your marketing expertise for product positioning and your architecture and planning expertise for technical fields.
 
 RULES:
 1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
 2. Fill every field of the schema thoroughly.
-3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
-4. For "starterPrompt", write 4-8 short plain-language sentences (maximum 2500 characters) describing what to build and the essential user experience. Keep it non-technical and exclude file names, routes, schemas, framework setup, and deployment steps.
-5. For "markdownBrief", produce a comprehensive Markdown version of every section of the brief, suitable for sharing or pasting into docs.
-6. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
-7. The dataModel should have realistic entities with typed fields.
-8. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
-9. Include potential risks and edge cases specific to the idea.
+3. For "appName", choose a brandable, memorable name (2-3 words max) that is relevant to the target audience, communicates or evokes the core value proposition, and helps sell and position the product. Avoid generic or random names.
+4. For "appSummary", write 2-4 concise sentences for prospective users that sell the app by framing their problem or need, its distinctive value, the key benefit, and the desired outcome. Ground every claim in the supplied idea and answers; do not invent claims or use hype, guarantees, or unsupported superlatives.
+5. For "starterPrompt", write 4-8 short plain-language sentences (maximum 2500 characters) describing what to build, communicating the product's value, and covering the essential user experience. Keep it non-technical, grounded in the brief, and exclude file names, routes, schemas, framework setup, and deployment steps.
+6. For "markdownBrief", produce a comprehensive Markdown version of every section of the brief, suitable for sharing or pasting into docs.
+7. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
+8. The dataModel should have realistic entities with typed fields.
+9. The buildPhases initialPhase must be the minimum viable functionality, exactly what is needed to make the core user flow work and no more. Every subsequent milestone must incrementally build on prior phases and add functionality until the user's full stated idea is implemented. Generate at least 5 milestones. The progression should clearly move from MVP to complete product.
+10. Include potential risks and edge cases specific to the idea.
 
 JSON SCHEMA (ProjectBrief):
 {
-  "appName": "string - short creative name for the app (2-3 words)",
-  "appSummary": "string - 2-4 sentence summary of the app",
+  "appName": "string - brandable, memorable product name (2-3 words max) relevant to the audience that communicates or evokes the core value proposition and helps sell and position the product; avoid generic or random names",
+  "appSummary": "string - 2-4 concise sentences for prospective users framing their problem or need, the app's distinctive value, key benefit, and desired outcome; grounded in supplied information with no invented claims, hype, guarantees, or unsupported superlatives",
   "targetUsers": ["string - each target user persona"],
   "coreFeatures": ["string - each core feature"],
   "recommendedTechStack": {
@@ -89,21 +90,22 @@ export function buildPlannerUserPrompt(idea: string, answers?: Record<string, st
 }
 
 export function buildBriefOverviewSystemPrompt(): string {
-  return `You are an expert software architect and project planner. When the user describes an app idea, you generate the structured data portion of a ProjectBrief as a JSON object.
+  return `You are an expert application marketer with 30 years of experience, as well as an expert software architect and project planner. When the user describes an app idea, you generate the structured data portion of a ProjectBrief as a JSON object, using your marketing expertise for product positioning and your architecture and planning expertise for technical fields.
 
 RULES:
 1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
 2. Fill every field of the schema thoroughly.
-3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
-4. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
-5. The dataModel should have realistic entities with typed fields.
-6. The buildPhases should have an initialPhase focused on core functionality, followed by milestones with descriptive names that extend the app logically. Generate at least 5 milestones.
-7. Include potential risks and edge cases specific to the idea.
+3. For "appName", choose a brandable, memorable name (2-3 words max) that is relevant to the target audience, communicates or evokes the core value proposition, and helps sell and position the product. Avoid generic or random names.
+4. For "appSummary", write 4-8 concise sentences for prospective users that sell the app by framing their problem or need, its distinctive value, the key benefit, and the desired outcome. Ground every claim in the supplied idea and answers; do not invent claims or use hype, guarantees, or unsupported superlatives.
+5. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
+6. The dataModel should have realistic entities with typed fields.
+7. The buildPhases initialPhase must be the minimum viable functionality, exactly what is needed to make the core user flow work and no more. Every subsequent milestone must incrementally build on prior phases and add functionality until the user's full stated idea is implemented. Generate at least 5 milestones. The progression should clearly move from MVP to complete product.
+8. Include potential risks and edge cases specific to the idea.
 
 JSON SCHEMA (BriefOverview):
 {
-  "appName": "string - short creative name for the app (2-3 words)",
-  "appSummary": "string - 2-4 sentence summary of the app",
+  "appName": "string - brandable, memorable product name (2-3 words max) relevant to the audience that communicates or evokes the core value proposition and helps sell and position the product; avoid generic or random names",
+  "appSummary": "string - 2-4 concise sentences for prospective users framing their problem or need, the app's distinctive value, key benefit, and desired outcome; grounded in supplied information with no invented claims, hype, guarantees, or unsupported superlatives",
   "targetUsers": ["string - each target user persona"],
   "coreFeatures": ["string - each core feature"],
   "recommendedTechStack": {
@@ -173,13 +175,14 @@ export function buildBriefOverviewUserPrompt(idea: string, answers?: Record<stri
 }
 
 export function buildStarterPromptSystemPrompt(): string {
-  return `Given a completed project brief, write a short prompt that clearly describes the product to build in plain language.
+  return `Given a completed project brief, write a short prompt that clearly describes the product to build and communicates its value in plain language.
 
 RULES:
 1. Return ONLY valid JSON with a "starterPrompt" field — no markdown fences, no commentary.
 2. Write roughly 4-8 sentences and no more than 2500 characters.
-3. Focus on the app's purpose, intended users, and essential behavior.
+3. Help sell the product by clearly conveying the user problem or need, the product's distinctive value, its key benefit, the intended outcome, and the essential user experience.
 4. Use plain, non-technical language. Exclude technologies, file names, routes, schemas, framework setup, and deployment steps.
+5. Ground every statement in the supplied brief. Do not invent claims or requirements, and avoid hype, guarantees, or unsupported superlatives.
 
 JSON SCHEMA:
 {
@@ -303,8 +306,10 @@ Return ONLY the JSON with the "starterPrompt" field, nothing else.`;
 }
 
 const SECTION_GUIDANCE: Record<AssistantSection, string> = {
-  appName: "a short, memorable product name",
-  appSummary: "the complete product summary",
+  appName:
+    "one brandable, memorable product name of 2-3 words maximum that is relevant to the audience, communicates or evokes the core value proposition, helps sell and position the product, and is neither generic nor random",
+  appSummary:
+    "a complete 2-4 sentence summary for prospective users that sells the app by framing their problem or need, its distinctive value, key benefit, and desired outcome, while remaining grounded in the supplied brief without invented claims, hype, guarantees, or unsupported superlatives",
   targetUsers: "the complete list of target user groups",
   coreFeatures: "the complete list of core features",
   recommendedTechStack:
@@ -316,7 +321,12 @@ const SECTION_GUIDANCE: Record<AssistantSection, string> = {
 };
 
 export function buildBriefAssistanceSystemPrompt(section: AssistantSection): string {
-  return `You help refine one selected section of a structured project brief.
+  const role =
+    section === "appName" || section === "appSummary"
+      ? "You are an expert application marketer with 30 years of experience. You help refine one selected section of a structured project brief."
+      : "You help refine one selected section of a structured project brief.";
+
+  return `${role}
 
 RULES:
 1. Return only the requested JSON object with "answer" and "proposedValue" fields.
