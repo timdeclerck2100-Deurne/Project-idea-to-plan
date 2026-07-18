@@ -2,7 +2,12 @@ import { NextRequest } from "next/server";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { buildQuestionsSystemPrompt, buildQuestionsUserPrompt, buildReplaceQuestionUserPrompt } from "@/lib/planner-prompt";
+import {
+  buildQuestionsSystemPrompt,
+  buildQuestionsUserPrompt,
+  buildReplaceQuestionUserPrompt,
+  buildSingleQuestionSystemPrompt,
+} from "@/lib/planner-prompt";
 import { validateEndpointUrl, sanitizeError } from "@/lib/provider-validation";
 
 const optionSchema = z.object({
@@ -73,7 +78,7 @@ export async function POST(request: NextRequest) {
       const { object } = await generateObject({
         model: provider(model),
         schema: singleQuestionResponseSchema,
-        system: buildQuestionsSystemPrompt(),
+        system: buildSingleQuestionSystemPrompt(),
         messages: [
           {
             role: "user",

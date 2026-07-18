@@ -495,69 +495,70 @@ export function RoadmapCard({ roadmap, onChange, assistant }: RoadmapCardProps) 
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4">
-          {/* ── Initial Phase ─────────────────────── */}
-          <div className="space-y-2">
-            <div className="micro-label">Foundation</div>
-            <Input
-              value={roadmap.initialPhase.name}
-              onChange={(e) =>
-                onChange({
-                  ...roadmap,
-                  initialPhase: {
-                    ...roadmap.initialPhase,
-                    name: e.target.value,
-                  },
-                })
-              }
-              placeholder="Phase name"
-              className="h-8 text-sm"
-            />
-            <BadgeDropZone groupId="initial">
-              <PhaseBadges
-                phase={roadmap.initialPhase}
-                group="initial"
-                roadmap={roadmap}
-                onChange={onChange}
+          <div className="grid min-w-0 gap-6 md:grid-cols-2">
+            {/* ── Initial Phase ─────────────────────── */}
+            <div className="space-y-2">
+              <div className="micro-label">Foundation</div>
+              <Input
+                value={roadmap.initialPhase.name}
+                onChange={(e) =>
+                  onChange({
+                    ...roadmap,
+                    initialPhase: {
+                      ...roadmap.initialPhase,
+                      name: e.target.value,
+                    },
+                  })
+                }
+                placeholder="Phase name"
+                className="h-8 text-sm"
               />
-            </BadgeDropZone>
-          </div>
+              <BadgeDropZone groupId="initial">
+                <PhaseBadges
+                  phase={roadmap.initialPhase}
+                  group="initial"
+                  roadmap={roadmap}
+                  onChange={onChange}
+                />
+              </BadgeDropZone>
+            </div>
 
-          {/* ── Milestones ───────────────────────── */}
-          {roadmap.milestones.length > 0 && (
+            {/* ── Milestones ───────────────────────── */}
             <div className="space-y-2">
               <div className="micro-label">Milestones</div>
-              <div className="space-y-2">
-                {roadmap.milestones.map((ms, i) => (
-                  <MilestoneCard
-                    key={i}
-                    milestone={ms}
-                    index={i}
-                    total={roadmap.milestones.length}
-                    roadmap={roadmap}
-                    onChange={onChange}
-                  />
-                ))}
-              </div>
+              {roadmap.milestones.length > 0 && (
+                <div className="space-y-2">
+                  {roadmap.milestones.map((ms, i) => (
+                    <MilestoneCard
+                      key={i}
+                      milestone={ms}
+                      index={i}
+                      total={roadmap.milestones.length}
+                      roadmap={roadmap}
+                      onChange={onChange}
+                    />
+                  ))}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  onChange({
+                    ...roadmap,
+                    milestones: [
+                      ...roadmap.milestones,
+                      { name: "", goals: [], deliverables: [] },
+                    ],
+                  })
+                }
+                className="w-full"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Milestone
+              </Button>
             </div>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              onChange({
-                ...roadmap,
-                milestones: [
-                  ...roadmap.milestones,
-                  { name: "", goals: [], deliverables: [] },
-                ],
-              })
-            }
-            className="w-full"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Milestone
-          </Button>
+          </div>
 
           {assistant && <div className="min-w-0">{assistant}</div>}
         </CardContent>

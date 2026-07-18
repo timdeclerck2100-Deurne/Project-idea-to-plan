@@ -7,7 +7,7 @@ RULES:
 1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
 2. Fill every field of the schema thoroughly.
 3. For "appName", choose a short, memorable, creative name for the app (2-3 words max).
-4. For "starterPrompt", write 2-4 short plain-language sentences (maximum 600 characters) describing what to build and the essential user experience. Keep it non-technical and exclude file names, routes, schemas, framework setup, and deployment steps.
+4. For "starterPrompt", write 4-8 short plain-language sentences (maximum 2500 characters) describing what to build and the essential user experience. Keep it non-technical and exclude file names, routes, schemas, framework setup, and deployment steps.
 5. For "markdownBrief", produce a comprehensive Markdown version of every section of the brief, suitable for sharing or pasting into docs.
 6. Choose technology only after considering platform, constraints, expected scale, integrations, cost, and stated preferences. Do not default to any framework or host. Use the lowest-complexity suitable stack when requirements are unclear, and leave irrelevant stack categories empty.
 7. The dataModel should have realistic entities with typed fields.
@@ -68,7 +68,7 @@ JSON SCHEMA (ProjectBrief):
     ]
   },
   "risksEdgeCases": ["string"],
-  "starterPrompt": "string - 2-4 plain-language, non-technical sentences, maximum 600 characters",
+  "starterPrompt": "string - 4-8 plain-language, non-technical sentences, maximum 2500 characters",
   "markdownBrief": "string - comprehensive full brief in Markdown format"
 }`;
 }
@@ -177,13 +177,13 @@ export function buildStarterPromptSystemPrompt(): string {
 
 RULES:
 1. Return ONLY valid JSON with a "starterPrompt" field — no markdown fences, no commentary.
-2. Write roughly 2-4 sentences and no more than 600 characters.
+2. Write roughly 4-8 sentences and no more than 2500 characters.
 3. Focus on the app's purpose, intended users, and essential behavior.
 4. Use plain, non-technical language. Exclude technologies, file names, routes, schemas, framework setup, and deployment steps.
 
 JSON SCHEMA:
 {
-  "starterPrompt": "string - 2-4 plain-language sentences, maximum 600 characters"
+  "starterPrompt": "string - 4-8 plain-language sentences, maximum 2500 characters"
 }`;
 }
 
@@ -235,6 +235,28 @@ export function buildQuestionsUserPrompt(idea: string): string {
 Generate 3-9 clarifying questions as a JSON object. Return ONLY the JSON, nothing else.`;
 }
 
+export function buildSingleQuestionSystemPrompt(): string {
+  return `You are an expert software architect. Given an app idea and its existing clarifying questions, generate exactly one new, distinct clarifying question.
+
+RULES:
+1. Return ONLY valid JSON — no markdown fences, no commentary before or after.
+2. Return exactly one question with between 2 and 4 multiple choice options.
+3. The question must cover a different aspect of the app idea than the existing questions.
+4. Options should be distinct and cover the most likely choices.
+5. Each option has a short "label" (2-5 words) and a brief "description" (1 sentence).
+
+JSON SCHEMA:
+{
+  "question": "string - the clarifying question",
+  "options": [
+    {
+      "label": "string - short option label",
+      "description": "string - brief explanation of this choice"
+    }
+  ]
+}`;
+}
+
 export function buildReplaceQuestionUserPrompt(
   idea: string,
   existingQuestions: { question: string }[]
@@ -256,14 +278,14 @@ export function buildUpdateExportsSystemPrompt(): string {
 
 RULES:
 1. Return ONLY valid JSON with a "starterPrompt" field - no markdown fences or commentary.
-2. Write roughly 2-4 sentences and no more than 600 characters.
+2. Write roughly 4-8 sentences and no more than 2500 characters.
 3. Focus on purpose, users, and essential behavior in plain, non-technical language.
 4. Exclude technologies, file names, routes, schemas, framework setup, and deployment steps.
 5. Faithfully reflect the supplied brief without inventing requirements.
 
 JSON SCHEMA:
 {
-  "starterPrompt": "string - 2-4 plain-language sentences, maximum 600 characters"
+  "starterPrompt": "string - 4-8 plain-language sentences, maximum 2500 characters"
 }`;
 }
 

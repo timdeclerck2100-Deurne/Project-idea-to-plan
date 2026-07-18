@@ -67,7 +67,7 @@ export const briefOverviewSchema = z.object({
 });
 
 export const starterPromptSchema = z.object({
-  starterPrompt: z.string().min(1).max(600),
+  starterPrompt: z.string().min(1).max(2500),
 });
 
 export const projectBriefSchema = briefOverviewSchema.extend({
