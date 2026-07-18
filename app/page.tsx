@@ -43,6 +43,16 @@ type AssistantResponse = {
   proposedValue: unknown;
 };
 
+type BriefSubmissionSnapshot = Readonly<{
+  idea: string;
+  answers?: Readonly<Record<string, string>>;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+}>;
+
+type GenerationFailure = "questions" | "brief";
+
 async function readJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -133,6 +143,7 @@ export default function Home() {
   const [progress, setProgress] = React.useState("");
   const [section, setSection] = React.useState<"overview" | "starter-prompt" | "formatting" | "done">("done");
   const [error, setError] = React.useState<string>();
+  const [generationFailure, setGenerationFailure] = React.useState<GenerationFailure>();
   const [isUpdatingExports, setIsUpdatingExports] = React.useState(false);
   const [isUpdatingStarterPrompt, setIsUpdatingStarterPrompt] = React.useState(false);
   const [questions, setQuestions] = React.useState<ClarifyingQuestion[]>([]);
@@ -151,6 +162,15 @@ export default function Home() {
   const nameSuggestionSourceRef = React.useRef<BriefOverview | null>(null);
   const dismissedGeneratedNamesRef = React.useRef<string[]>([]);
   const assistantRequestRefs = React.useRef<Partial<Record<ContentAssistantSection, number>>>({});
+  const retrySnapshotRef = React.useRef<BriefSubmissionSnapshot | null>(null);
+  const questionRunRef = React.useRef(0);
+  const questionRunActiveRef = React.useRef(false);
+  const briefRunRef = React.useRef(0);
+  const briefRunActiveRef = React.useRef(false);
+  const starterUpdateRequestRef = React.useRef(0);
+  const starterUpdateControllerRef = React.useRef<AbortController | null>(null);
+  const exportRequestRef = React.useRef(0);
+  const exportControllerRef = React.useRef<AbortController | null>(null);
 
   React.useEffect(() => {
     briefRef.current = brief;
@@ -170,13 +190,25 @@ export default function Home() {
   }, [setModelRaw]);
 
   const handleGenerate = React.useCallback(async () => {
-    if (!idea.trim() || !baseUrl.trim() || !model.trim()) return;
+    if (
+      questionRunActiveRef.current ||
+      briefRunActiveRef.current ||
+      retrySnapshotRef.current ||
+      !idea.trim() ||
+      !baseUrl.trim() ||
+      !model.trim()
+    ) return;
 
     const controller = new AbortController();
+    const runId = questionRunRef.current + 1;
+    questionRunRef.current = runId;
+    questionRunActiveRef.current = true;
     abortRef.current = controller;
+    retrySnapshotRef.current = null;
 
     setStatus("questions");
     setError(undefined);
+    setGenerationFailure(undefined);
     setQuestions([]);
     setIsGeneratingQuestions(true);
 
@@ -192,24 +224,35 @@ export default function Home() {
         }),
         signal: controller.signal,
       });
+      if (questionRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
 
       if (!response.ok) {
         const errData = await response.json();
+        if (questionRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         throw new Error(errData.error || "Failed to generate questions.");
       }
 
       const result = await response.json();
+      if (questionRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
       setQuestions(result.questions);
     } catch (err) {
+      if (questionRunRef.current !== runId) return;
       if (err instanceof DOMException && err.name === "AbortError") {
         setStatus("idle");
       } else {
         setStatus("error");
+        setGenerationFailure("questions");
         setError(err instanceof Error ? err.message : "An unexpected error occurred.");
       }
     } finally {
-      setIsGeneratingQuestions(false);
-      abortRef.current = null;
+      if (questionRunRef.current === runId) {
+        questionRunActiveRef.current = false;
+        setIsGeneratingQuestions(false);
+        if (abortRef.current === controller) abortRef.current = null;
+      }
     }
   }, [idea, baseUrl, model, apiKey]);
 
@@ -217,17 +260,40 @@ export default function Home() {
     abortRef.current?.abort();
   }, []);
 
-  const generateBrief = React.useCallback(async (answers?: Record<string, string>) => {
-    if (!idea.trim() || !baseUrl.trim() || !model.trim()) return;
+  const generateBrief = React.useCallback(async (snapshot: BriefSubmissionSnapshot) => {
+    if (briefRunActiveRef.current) return;
 
     const controller = new AbortController();
+    const runId = briefRunRef.current + 1;
+    briefRunRef.current = runId;
+    briefRunActiveRef.current = true;
     abortRef.current = controller;
+    starterUpdateRequestRef.current += 1;
+    starterUpdateControllerRef.current?.abort();
+    starterUpdateControllerRef.current = null;
+    exportRequestRef.current += 1;
+    exportControllerRef.current?.abort();
+    exportControllerRef.current = null;
 
     setStatus("generating");
     setProgress("Connecting to provider...");
     setError(undefined);
+    setGenerationFailure(undefined);
+    nameRequestRef.current += 1;
+    nameSuggestionSourceRef.current = null;
     dismissedGeneratedNamesRef.current = [];
+    for (const sectionId of Object.keys(assistantRequestRefs.current) as ContentAssistantSection[]) {
+      assistantRequestRefs.current[sectionId] =
+        (assistantRequestRefs.current[sectionId] ?? 0) + 1;
+    }
+    briefRef.current = emptyBrief;
     setBrief(emptyBrief);
+    setIsGeneratingName(false);
+    setNameGenerationError(null);
+    setGeneratedNameSuggestion(null);
+    setAssistantStates({});
+    setIsUpdatingStarterPrompt(false);
+    setIsUpdatingExports(false);
     setSection("overview");
 
     try {
@@ -236,18 +302,22 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea: idea.trim(),
-          baseUrl: baseUrl.trim(),
-          model: model.trim(),
-          apiKey: apiKey || undefined,
-          answers,
+          idea: snapshot.idea,
+          baseUrl: snapshot.baseUrl,
+          model: snapshot.model,
+          apiKey: snapshot.apiKey || undefined,
+          answers: snapshot.answers,
           section: "overview",
         }),
         signal: controller.signal,
       });
+      if (briefRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
 
       if (!overviewResponse.ok) {
         const errData = await overviewResponse.json();
+        if (briefRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         throw new Error(errData.error || "Failed to generate brief overview.");
       }
 
@@ -260,11 +330,15 @@ export default function Home() {
 
       while (true) {
         const { done, value } = await overviewReader.read();
+        if (briefRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         if (done) break;
 
         overviewText += decoder.decode(value, { stream: true });
 
         const { value: partial, state } = await parsePartialJson(overviewText);
+        if (briefRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         if (
           state !== "undefined-input" &&
           state !== "failed-parse" &&
@@ -276,10 +350,12 @@ export default function Home() {
           lastOverviewApplied = partial.appSummary as string;
           try {
             const validated = briefOverviewSchema.partial().parse(partial);
-            setBrief((prev) => ({
-              ...prev,
+            const nextBrief = {
+              ...briefRef.current,
               ...(validated as Partial<ProjectBrief>),
-            }));
+            };
+            briefRef.current = nextBrief;
+            setBrief(nextBrief);
           } catch {
             // partial validation failed, skip this update
           }
@@ -287,6 +363,8 @@ export default function Home() {
       }
 
       const { value: finalOverview, state: overviewState } = await parsePartialJson(overviewText);
+      if (briefRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
       if (overviewState !== "successful-parse" && overviewState !== "repaired-parse") {
         throw new Error(
           "The provider response could not be parsed as a valid BriefOverview. " +
@@ -295,7 +373,9 @@ export default function Home() {
       }
 
       const validatedOverview = briefOverviewSchema.parse(finalOverview);
-      setBrief((prev) => ({ ...prev, ...validatedOverview }));
+      const overviewBrief = { ...emptyBrief, ...validatedOverview };
+      briefRef.current = overviewBrief;
+      setBrief(overviewBrief);
 
       // Step 2: Generate starter prompt
       setSection("starter-prompt");
@@ -305,17 +385,21 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          baseUrl: baseUrl.trim(),
-          model: model.trim(),
-          apiKey: apiKey || undefined,
+          baseUrl: snapshot.baseUrl,
+          model: snapshot.model,
+          apiKey: snapshot.apiKey || undefined,
           section: "starter-prompt",
           brief: validatedOverview,
         }),
         signal: controller.signal,
       });
+      if (briefRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
 
       if (!starterResponse.ok) {
         const errData = await starterResponse.json();
+        if (briefRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         throw new Error(errData.error || "Failed to generate starter prompt.");
       }
 
@@ -326,11 +410,15 @@ export default function Home() {
 
       while (true) {
         const { done, value } = await starterReader.read();
+        if (briefRunRef.current !== runId) return;
+        controller.signal.throwIfAborted();
         if (done) break;
         starterText += decoder.decode(value, { stream: true });
       }
 
       const { value: finalStarter, state: starterState } = await parsePartialJson(starterText);
+      if (briefRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
       if (starterState !== "successful-parse" && starterState !== "repaired-parse") {
         throw new Error(
           "The starter prompt response could not be parsed. " +
@@ -339,7 +427,6 @@ export default function Home() {
       }
 
       const validatedStarter = starterPromptSchema.parse(finalStarter);
-      setBrief((prev) => ({ ...prev, ...validatedStarter }));
 
       // Step 3: Generate markdown brief client-side
       setSection("formatting");
@@ -347,31 +434,65 @@ export default function Home() {
 
       const fullBrief = { ...validatedOverview, ...validatedStarter };
       const markdownBrief = generateMarkdownBrief(fullBrief);
-      setBrief((prev) => ({ ...prev, markdownBrief }));
+      const completedBrief = { ...fullBrief, markdownBrief };
+      if (briefRunRef.current !== runId) return;
+      controller.signal.throwIfAborted();
+      briefRef.current = completedBrief;
+      setBrief(completedBrief);
 
       setSection("done");
       setStatus("done");
       setProgress("");
+      retrySnapshotRef.current = null;
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        setStatus("idle");
-        setProgress("");
-        setSection("done");
-      } else {
-        setStatus("error");
-        setError(err instanceof Error ? err.message : "An unexpected error occurred.");
-      }
+      if (briefRunRef.current !== runId) return;
+      const wasAborted = controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError");
+      setStatus("error");
+      setProgress("");
+      setGenerationFailure("brief");
+      setError(
+        wasAborted
+          ? "Brief generation was stopped. You can retry from the beginning."
+          : err instanceof Error ? err.message : "An unexpected error occurred."
+      );
     } finally {
-      abortRef.current = null;
+      if (briefRunRef.current === runId) {
+        briefRunActiveRef.current = false;
+        if (abortRef.current === controller) abortRef.current = null;
+      }
     }
-  }, [idea, baseUrl, model, apiKey]);
+  }, []);
 
   const handleConfirmQuestions = React.useCallback((answers: Record<string, string>) => {
-    generateBrief(answers);
-  }, [generateBrief]);
+    if (briefRunActiveRef.current) return;
+    const snapshot = Object.freeze({
+      idea: idea.trim(),
+      answers: Object.freeze(structuredClone(answers)),
+      baseUrl: baseUrl.trim(),
+      model: model.trim(),
+      apiKey,
+    });
+    retrySnapshotRef.current = snapshot;
+    void generateBrief(snapshot);
+  }, [apiKey, baseUrl, generateBrief, idea, model]);
 
   const handleSkipQuestions = React.useCallback(() => {
-    generateBrief();
+    if (briefRunActiveRef.current) return;
+    const snapshot = Object.freeze({
+      idea: idea.trim(),
+      answers: undefined,
+      baseUrl: baseUrl.trim(),
+      model: model.trim(),
+      apiKey,
+    });
+    retrySnapshotRef.current = snapshot;
+    void generateBrief(snapshot);
+  }, [apiKey, baseUrl, generateBrief, idea, model]);
+
+  const handleRetryBrief = React.useCallback(() => {
+    const snapshot = retrySnapshotRef.current;
+    if (!snapshot || briefRunActiveRef.current) return;
+    void generateBrief(snapshot);
   }, [generateBrief]);
 
   const handleRegenerateQuestion = React.useCallback(async (index: number) => {
@@ -471,6 +592,11 @@ export default function Home() {
   const handleUpdateExports = React.useCallback(async () => {
     if (!baseUrl.trim() || !model.trim() || !briefRef.current.appSummary) return;
 
+    exportControllerRef.current?.abort();
+    const controller = new AbortController();
+    const requestId = exportRequestRef.current + 1;
+    exportRequestRef.current = requestId;
+    exportControllerRef.current = controller;
     const sourceBrief = structuredClone(briefRef.current);
     setIsUpdatingExports(true);
     setError(undefined);
@@ -484,9 +610,14 @@ export default function Home() {
           model: model.trim(),
           apiKey: apiKey || undefined,
         }),
+        signal: controller.signal,
       });
+      if (exportRequestRef.current !== requestId) return;
+      controller.signal.throwIfAborted();
 
       const result = await readJson(response);
+      if (exportRequestRef.current !== requestId) return;
+      controller.signal.throwIfAborted();
       if (!response.ok) {
         throw new Error(responseError(result, "Failed to update exports."));
       }
@@ -502,6 +633,8 @@ export default function Home() {
       }
       const markdownBrief = result.markdownBrief;
 
+      if (exportRequestRef.current !== requestId) return;
+      controller.signal.throwIfAborted();
       if (!sameValue(briefRef.current, sourceBrief)) {
         throw new Error(
           "The brief changed while exports were being regenerated. Update exports again."
@@ -509,11 +642,16 @@ export default function Home() {
       }
 
       setBrief((current) => {
+        if (exportRequestRef.current !== requestId || controller.signal.aborted) {
+          return current;
+        }
         if (!sameValue(current, sourceBrief)) {
           queueMicrotask(() => {
-            setError(
-              "The brief changed while exports were being regenerated. Update exports again."
-            );
+            if (exportRequestRef.current === requestId && !controller.signal.aborted) {
+              setError(
+                "The brief changed while exports were being regenerated. Update exports again."
+              );
+            }
           });
           return current;
         }
@@ -523,17 +661,25 @@ export default function Home() {
         return next;
       });
     } catch (err) {
+      if (exportRequestRef.current !== requestId || controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "Failed to update exports.");
     } finally {
-      setIsUpdatingExports(false);
+      if (exportRequestRef.current === requestId) {
+        setIsUpdatingExports(false);
+        if (exportControllerRef.current === controller) exportControllerRef.current = null;
+      }
     }
   }, [baseUrl, model, apiKey]);
 
   const handleUpdateStarterPrompt = React.useCallback(async (feedback: string) => {
-    if (!baseUrl.trim() || !model.trim() || !brief.appSummary) return;
+    if (!baseUrl.trim() || !model.trim() || !briefRef.current.appSummary) return;
 
+    starterUpdateControllerRef.current?.abort();
     const controller = new AbortController();
-    abortRef.current = controller;
+    const requestId = starterUpdateRequestRef.current + 1;
+    starterUpdateRequestRef.current = requestId;
+    starterUpdateControllerRef.current = controller;
+    const sourceBrief = structuredClone(briefRef.current);
 
     setIsUpdatingStarterPrompt(true);
     setError(undefined);
@@ -547,14 +693,18 @@ export default function Home() {
           model: model.trim(),
           apiKey: apiKey || undefined,
           section: "starter-prompt",
-          brief,
+          brief: sourceBrief,
           feedback,
         }),
         signal: controller.signal,
       });
+      if (starterUpdateRequestRef.current !== requestId) return;
+      controller.signal.throwIfAborted();
 
       if (!response.ok) {
         const errData = await response.json();
+        if (starterUpdateRequestRef.current !== requestId) return;
+        controller.signal.throwIfAborted();
         throw new Error(errData.error || "Failed to update starter prompt.");
       }
 
@@ -566,28 +716,46 @@ export default function Home() {
 
       while (true) {
         const { done, value } = await reader.read();
+        if (starterUpdateRequestRef.current !== requestId) return;
+        controller.signal.throwIfAborted();
         if (done) break;
         text += decoder.decode(value, { stream: true });
       }
 
       const { value: final, state } = await parsePartialJson(text);
+      if (starterUpdateRequestRef.current !== requestId) return;
+      controller.signal.throwIfAborted();
       if (state === "successful-parse" || state === "repaired-parse") {
         const validated = starterPromptSchema.parse(final);
-        setBrief((prev) => ({ ...prev, ...validated }));
+        setBrief((current) => {
+          if (
+            starterUpdateRequestRef.current !== requestId ||
+            controller.signal.aborted
+          ) {
+            return current;
+          }
+          const next = { ...current, ...validated };
+          briefRef.current = next;
+          return next;
+        });
       } else {
         throw new Error("The starter prompt response could not be parsed.");
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         // Aborted, do nothing
-      } else {
+      } else if (starterUpdateRequestRef.current === requestId) {
         setError(err instanceof Error ? err.message : "Failed to update starter prompt.");
       }
     } finally {
-      setIsUpdatingStarterPrompt(false);
-      abortRef.current = null;
+      if (starterUpdateRequestRef.current === requestId) {
+        setIsUpdatingStarterPrompt(false);
+        if (starterUpdateControllerRef.current === controller) {
+          starterUpdateControllerRef.current = null;
+        }
+      }
     }
-  }, [brief, baseUrl, model, apiKey]);
+  }, [baseUrl, model, apiKey]);
 
   const handleCommitName = React.useCallback((name: string) => {
     nameRequestRef.current += 1;
@@ -877,6 +1045,17 @@ export default function Home() {
 
   const handleReset = React.useCallback(() => {
     abortRef.current?.abort();
+    questionRunRef.current += 1;
+    questionRunActiveRef.current = false;
+    briefRunRef.current += 1;
+    briefRunActiveRef.current = false;
+    retrySnapshotRef.current = null;
+    starterUpdateRequestRef.current += 1;
+    starterUpdateControllerRef.current?.abort();
+    starterUpdateControllerRef.current = null;
+    exportRequestRef.current += 1;
+    exportControllerRef.current?.abort();
+    exportControllerRef.current = null;
     nameRequestRef.current += 1;
     nameSuggestionSourceRef.current = null;
     dismissedGeneratedNamesRef.current = [];
@@ -884,19 +1063,28 @@ export default function Home() {
       assistantRequestRefs.current[sectionId] =
         (assistantRequestRefs.current[sectionId] ?? 0) + 1;
     }
+    briefRef.current = emptyBrief;
     setBrief(emptyBrief);
     setStatus("idle");
     setProgress("");
     setSection("done");
     setError(undefined);
+    setGenerationFailure(undefined);
     setQuestions([]);
+    setIsGeneratingQuestions(false);
+    setRegeneratingIndex(null);
+    setIsAddingQuestion(false);
     setIsGeneratingName(false);
+    setIsUpdatingStarterPrompt(false);
+    setIsUpdatingExports(false);
     setNameGenerationError(null);
     setGeneratedNameSuggestion(null);
     setAssistantStates({});
   }, []);
 
   const hasBrief = brief.appSummary !== "";
+  const hasRetryableBriefError =
+    status === "error" && generationFailure === "brief" && retrySnapshotRef.current !== null;
 
   return (
     <PlannerShell>
@@ -905,7 +1093,11 @@ export default function Home() {
         <div className="flex flex-col gap-4 lg:flex-row">
           {/* Left: App idea textarea (2/3) */}
           <div className="min-w-0 w-full lg:w-2/3">
-            <IdeaInput value={idea} onChange={setIdea} disabled={status === "generating" || status === "questions"} />
+            <IdeaInput
+              value={idea}
+              onChange={setIdea}
+              disabled={status === "generating" || status === "questions" || hasRetryableBriefError}
+            />
           </div>
 
           {/* Right: Settings + actions (1/3) */}
@@ -918,7 +1110,9 @@ export default function Home() {
               onModelChange={handleModelChange}
               apiKey={apiKey}
               onApiKeyChange={setApiKey}
-              disabled={status === "generating" || status === "questions"}
+              disabled={
+                status === "generating" || status === "questions" || hasRetryableBriefError
+              }
             />
 
             {/* Bottom line: theme + actions */}
@@ -934,7 +1128,7 @@ export default function Home() {
                 {status === "error" && "Error"}
               </Badge>
               <div className="min-w-0 flex-1" />
-              {(status === "generating" || (status === "questions" && !isGeneratingQuestions)) ? (
+              {(status === "generating" || (status === "questions" && isGeneratingQuestions)) ? (
                 <Button
                   onClick={handleStop}
                   className="bg-destructive/80 hover:bg-destructive text-destructive-foreground"
@@ -945,7 +1139,13 @@ export default function Home() {
               ) : (
                 <Button
                   onClick={handleGenerate}
-                  disabled={!idea.trim() || !baseUrl.trim() || !model.trim() || status === "questions"}
+                  disabled={
+                    !idea.trim() ||
+                    !baseUrl.trim() ||
+                    !model.trim() ||
+                    status === "questions" ||
+                    hasRetryableBriefError
+                  }
                 >
                   <Sparkles className="h-4 w-4" />
                   Generate
@@ -961,14 +1161,26 @@ export default function Home() {
         </div>
       </Card>
 
-      {status !== "questions" && <GenerationStatus status={status} progress={progress} section={section} error={error} />}
+      {status !== "questions" && (
+        <GenerationStatus
+          status={status}
+          progress={progress}
+          section={section}
+          error={error}
+          onRetry={hasRetryableBriefError ? handleRetryBrief : undefined}
+        />
+      )}
 
       {/* Main content — fills all remaining space */}
       {status === "questions" && (
         <div className="flex-1 min-h-0 overflow-y-auto animate-fade-up">
           {isGeneratingQuestions ? (
             <div className="flex-1 blueprint-surface rounded-xl flex items-center justify-center">
-              <div className="text-center space-y-2 px-8">
+              <div
+                role="status"
+                aria-live="polite"
+                className="text-center space-y-2 px-8"
+              >
                 <div className="font-display text-xl font-bold text-muted-foreground">
                   Thinking of questions...
                 </div>
