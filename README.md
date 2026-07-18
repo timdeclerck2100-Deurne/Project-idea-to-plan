@@ -1,15 +1,29 @@
 # Project Idea to Plan
 
-An AI-powered tool that transforms abstract app ideas into structured, actionable project plans. Enter your idea, configure an AI provider, and get a comprehensive blueprint including clarifying questions, a project brief, data models, build phases, and starter prompts — all streamed in real time.
+An AI-powered tool that transforms abstract app ideas into structured, actionable project plans. Enter your idea, configure an AI provider, answer a few clarifying questions, and get a comprehensive blueprint — all streamed in real time. Every section of the generated brief is fully editable, with visual graphs and one-click export.
+
+## Features
+
+- **Clarifying Questions** — Before generating, the AI asks interactive multiple-choice questions to sharpen the brief. Regenerate, add, or skip questions as needed.
+- **Full Project Brief** — Generates app summary, target users, core features, recommended tech stack, pages & routes, data model, build phases/roadmap, and risks & edge cases.
+- **Starter Prompt** — Produces a ready-to-use prompt for bootstrapping the project, with feedback-driven refinement.
+- **Editable Sections** — Every part of the generated brief is inline-editable. Tweak users, features, tech stack, entities, or roadmap directly in the UI.
+- **Visual Graphs** — Interactive Data Model and Planner Flow diagrams powered by React Flow.
+- **11 Built-in Themes** — Switch between Blueprint, Ocean Depths, Sunset Boulevard, Forest Canopy, Modern Minimalist, Golden Hour, Arctic Frost, Desert Rose, Tech Innovation, Botanical Garden, and Midnight Galaxy.
+- **Export** — Copy or download the markdown brief and starter prompt with one click.
+- **Real-time Streaming** — Watch the brief generate token by token as the AI works.
 
 ## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
 | Framework | Next.js 16 (App Router) + React 19 + TypeScript |
-| Styling | Tailwind CSS v4 |
+| Styling | Tailwind CSS v4, `class-variance-authority`, `clsx`, `tailwind-merge` |
 | AI Integration | Vercel AI SDK + `@ai-sdk/openai-compatible` |
 | Graphs | React Flow (`@xyflow/react`) |
+| Drag & Drop | `@dnd-kit/react` |
+| UI Primitives | Radix UI (`@radix-ui/react-slot`, `@radix-ui/react-tabs`) |
+| Icons | Lucide React |
 | Validation | Zod v4 |
 | Package Manager | npm |
 
@@ -53,7 +67,11 @@ That's it. No `.env` file is needed — the app accepts all configuration throug
    - **Model** — The model name to use (e.g., `gpt-4o`, `claude-sonnet-4-20250514`)
    - **API Key** — Your provider's API key (never persisted, always entered fresh)
 
-5. Click **Generate** to start streaming your project plan.
+5. Click **Generate**. The AI will first produce a set of clarifying questions — answer them to sharpen the brief, regenerate any you don't like, add your own, or skip straight to generation.
+
+6. Review the generated brief. Every section (app summary, target users, features, tech stack, pages, data model, roadmap, risks) is inline-editable.
+
+7. Export via the **Copy** or **Download** buttons on the Markdown Brief and Starter Prompt cards. You can also refine the starter prompt by clicking **Update** and providing feedback.
 
 Non-secret settings (base URL and model) are saved to `localStorage` automatically.
 
@@ -83,7 +101,7 @@ Your app will be live on a `.vercel.app` URL within seconds.
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
 
-> **Note:** In production, the app enforces HTTPS for AI provider URLs. Ensure your provider's API endpoint uses HTTPS and is accessible from your server.
+> **Note:** In production, the app enforces HTTPS for AI provider URLs and blocks private/internal endpoints (localhost, `127.x`, `10.x`, `192.168.x`, etc.). Ensure your provider's API endpoint uses HTTPS and is publicly accessible from your server. This restriction is lifted in development mode.
 
 ## License
 
