@@ -107,9 +107,7 @@ const emptyBrief: ProjectBrief = {
   recommendedTechStack: {
     frontend: [],
     backend: [],
-    database: [],
     ai: [],
-    deployment: [],
   },
   pagesRoutes: [],
   dataModel: {

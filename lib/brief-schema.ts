@@ -37,15 +37,14 @@ export const roadmapSchema = z.object({
 });
 
 export const appNameSchema = z.string();
-export const appSummarySchema = z.string();
+export const appSummarySchema = z.string().min(1).max(2500);
 export const targetUsersSchema = z.array(z.string());
 export const coreFeaturesSchema = z.array(z.string());
 export const recommendedTechStackSchema = z.object({
   frontend: z.array(z.string()),
   backend: z.array(z.string()),
-  database: z.array(z.string()),
   ai: z.array(z.string()),
-  deployment: z.array(z.string()),
+  database: z.array(z.string()).optional(),
 });
 export const pagesRoutesSchema = z.array(pageRouteSchema);
 export const dataModelSchema = z.object({
