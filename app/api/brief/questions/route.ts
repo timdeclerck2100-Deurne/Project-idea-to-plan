@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { buildQuestionsSystemPrompt, buildQuestionsUserPrompt } from "@/lib/planner-prompt";
+import { buildQuestionsSystemPrompt, buildQuestionsUserPrompt, buildReplaceQuestionUserPrompt } from "@/lib/planner-prompt";
 import { validateEndpointUrl, sanitizeError } from "@/lib/provider-validation";
 
 const optionSchema = z.object({
@@ -19,11 +19,23 @@ const questionsResponseSchema = z.object({
   questions: z.array(questionSchema).min(3).max(9),
 });
 
+const singleQuestionResponseSchema = z.object({
+  question: z.string(),
+  options: z.array(optionSchema).min(2).max(4),
+});
+
+const existingQuestionSchema = z.object({
+  question: z.string(),
+});
+
 const requestBodySchema = z.object({
   idea: z.string().min(1, "App idea is required."),
   baseUrl: z.string().min(1, "Base URL is required."),
   model: z.string().min(1, "Model name is required."),
   apiKey: z.string().optional(),
+  replaceIndex: z.number().int().min(0).optional(),
+  addQuestion: z.boolean().optional(),
+  existingQuestions: z.array(existingQuestionSchema).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -38,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { idea, baseUrl, model, apiKey } = parsed.data;
+    const { idea, baseUrl, model, apiKey, replaceIndex, addQuestion, existingQuestions } = parsed.data;
 
     const isDev = process.env.NODE_ENV === "development";
     const validation = validateEndpointUrl(baseUrl, isDev);
@@ -52,6 +64,31 @@ export async function POST(request: NextRequest) {
       baseURL: validation.url.href.replace(/\/+$/, ""),
       apiKey: apiKey || "no-key",
     });
+
+    const isSingleQuestion =
+      (replaceIndex !== undefined && existingQuestions !== undefined) ||
+      (addQuestion === true && existingQuestions !== undefined);
+
+    if (isSingleQuestion) {
+      const { object } = await generateObject({
+        model: provider(model),
+        schema: singleQuestionResponseSchema,
+        system: buildQuestionsSystemPrompt(),
+        messages: [
+          {
+            role: "user",
+            content: buildReplaceQuestionUserPrompt(idea, existingQuestions!),
+          },
+        ],
+        temperature: 0.8,
+      });
+
+      if (replaceIndex !== undefined) {
+        return Response.json({ question: object, replaceIndex });
+      }
+
+      return Response.json({ question: object, addQuestion: true });
+    }
 
     const { object } = await generateObject({
       model: provider(model),

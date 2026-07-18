@@ -57,6 +57,8 @@ export default function Home() {
   const [isUpdatingStarterPrompt, setIsUpdatingStarterPrompt] = React.useState(false);
   const [questions, setQuestions] = React.useState<ClarifyingQuestion[]>([]);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = React.useState(false);
+  const [regeneratingIndex, setRegeneratingIndex] = React.useState<number | null>(null);
+  const [isAddingQuestion, setIsAddingQuestion] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
 
   const handleBaseUrlChange = React.useCallback((value: string) => {
@@ -271,6 +273,100 @@ export default function Home() {
     generateBrief();
   }, [generateBrief]);
 
+  const handleRegenerateQuestion = React.useCallback(async (index: number) => {
+    if (!idea.trim() || !baseUrl.trim() || !model.trim()) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setRegeneratingIndex(index);
+
+    try {
+      const existingQuestions = questions.map((q) => ({ question: q.question }));
+
+      const response = await fetch("/api/brief/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea: idea.trim(),
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          replaceIndex: index,
+          existingQuestions,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to regenerate question.");
+      }
+
+      const result = await response.json();
+      const newQuestion = result.question;
+
+      setQuestions((prev) => {
+        const next = [...prev];
+        next[index] = newQuestion;
+        return next;
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // Aborted, do nothing
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to regenerate question.");
+      }
+    } finally {
+      setRegeneratingIndex(null);
+      abortRef.current = null;
+    }
+  }, [idea, baseUrl, model, apiKey, questions]);
+
+  const handleAddQuestion = React.useCallback(async () => {
+    if (!idea.trim() || !baseUrl.trim() || !model.trim()) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsAddingQuestion(true);
+
+    try {
+      const existingQuestions = questions.map((q) => ({ question: q.question }));
+
+      const response = await fetch("/api/brief/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea: idea.trim(),
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          addQuestion: true,
+          existingQuestions,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to add question.");
+      }
+
+      const result = await response.json();
+      setQuestions((prev) => [...prev, result.question]);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // Aborted, do nothing
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to add question.");
+      }
+    } finally {
+      setIsAddingQuestion(false);
+      abortRef.current = null;
+    }
+  }, [idea, baseUrl, model, apiKey, questions]);
+
   const handleUpdateExports = React.useCallback(async () => {
     if (!baseUrl.trim() || !model.trim() || !brief.appSummary) return;
 
@@ -461,6 +557,10 @@ export default function Home() {
               questions={questions}
               onConfirm={handleConfirmQuestions}
               onSkip={handleSkipQuestions}
+              onRegenerate={handleRegenerateQuestion}
+              onAddQuestion={handleAddQuestion}
+              regeneratingIndex={regeneratingIndex}
+              isAddingQuestion={isAddingQuestion}
             />
           )}
         </div>

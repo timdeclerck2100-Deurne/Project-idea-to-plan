@@ -219,6 +219,22 @@ export function buildQuestionsUserPrompt(idea: string): string {
 Generate 3-9 clarifying questions as a JSON object. Return ONLY the JSON, nothing else.`;
 }
 
+export function buildReplaceQuestionUserPrompt(
+  idea: string,
+  existingQuestions: { question: string }[]
+): string {
+  const existingList = existingQuestions
+    .map((q, i) => `${i + 1}. ${q.question}`)
+    .join("\n");
+
+  return `App idea: ${idea}
+
+Existing clarifying questions (do NOT duplicate these):
+${existingList}
+
+Generate exactly 1 NEW, distinct clarifying question that covers a different aspect than the ones listed above. Return ONLY a JSON object with a single "question" field and "options" array (2-4 options). Return ONLY the JSON, nothing else.`;
+}
+
 export function buildUpdateExportsSystemPrompt(): string {
   return `You are an expert software architect. Given a project brief, regenerate the "starterPrompt" and "markdownBrief" fields to accurately reflect the current state of the brief.
 
