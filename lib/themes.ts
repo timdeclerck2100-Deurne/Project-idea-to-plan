@@ -60,9 +60,9 @@ export interface Theme {
   swatches: [string, string, string, string];
 }
 
-const FONT_SANS = '"IBM Plex Sans", system-ui, sans-serif';
-const FONT_SERIF = '"Fraunces", Georgia, serif';
-const FONT_MONO = '"IBM Plex Mono", ui-monospace, monospace';
+const FONT_SANS = 'var(--font-ibm-plex-sans), system-ui, sans-serif';
+const FONT_SERIF = 'var(--font-fraunces), Georgia, serif';
+const FONT_MONO = 'var(--font-ibm-plex-mono), ui-monospace, monospace';
 
 export const themes: Theme[] = [
   {
@@ -654,4 +654,58 @@ export const THEME_STORAGE_KEY = "planner-theme";
 
 export function getThemeById(id: string): Theme {
   return themes.find((t) => t.id === id) ?? themes[0];
+}
+
+export function buildThemeStyleString(theme: Theme): string {
+  const c = theme.colors;
+  const u = theme.utilities;
+  const f = theme.fonts;
+  return `
+:root {
+  --background: ${c.background};
+  --foreground: ${c.foreground};
+  --card: ${c.card};
+  --card-foreground: ${c.cardForeground};
+  --primary: ${c.primary};
+  --primary-foreground: ${c.primaryForeground};
+  --secondary: ${c.secondary};
+  --secondary-foreground: ${c.secondaryForeground};
+  --muted: ${c.muted};
+  --muted-foreground: ${c.mutedForeground};
+  --accent: ${c.accent};
+  --accent-foreground: ${c.accentForeground};
+  --destructive: ${c.destructive};
+  --destructive-foreground: ${c.destructiveForeground};
+  --border: ${c.border};
+  --ring: ${c.ring};
+  --input: ${c.input};
+  --chart-1: ${c.chart1};
+  --chart-2: ${c.chart2};
+  --chart-3: ${c.chart3};
+  --chart-4: ${c.chart4};
+  --chart-5: ${c.chart5};
+  --font-body: ${f.body};
+  --font-display-family: ${f.display};
+  --font-code: ${f.code};
+  --ut-planner-gradient: ${u.plannerBgGradient};
+  --ut-planner-grid: ${u.plannerBgGrid};
+  --ut-planner-radial1: ${u.plannerBgRadial1};
+  --ut-planner-radial2: ${u.plannerBgRadial2};
+  --ut-glass-bg: ${u.glassPanelBg};
+  --ut-glass-border: ${u.glassPanelBorder};
+  --ut-glass-shadow: ${u.glassPanelShadow};
+  --ut-glass-inset: ${u.glassPanelInset};
+  --ut-paper-bg: ${u.paperCardBg};
+  --ut-paper-border: ${u.paperCardBorder};
+  --ut-paper-shadow: ${u.paperCardShadow};
+  --ut-paper-inset: ${u.paperCardInset};
+  --ut-bp-grid: ${u.blueprintGrid};
+  --ut-bp-bg: ${u.blueprintBg};
+  --ut-bp-border: ${u.blueprintBorder};
+  --ut-cmd-from: ${u.commandStripFrom};
+  --ut-cmd-via: ${u.commandStripVia};
+  --ut-cmd-to: ${u.commandStripTo};
+  --ut-cmd-text: ${u.commandStripText};
+  --ut-micro-color: ${u.microLabelColor};
+}`;
 }

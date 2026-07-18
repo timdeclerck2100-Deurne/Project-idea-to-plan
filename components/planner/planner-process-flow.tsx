@@ -139,7 +139,7 @@ const processEdges: Edge[] = [
     target: "ai",
     type: "smoothstep",
     animated: true,
-    style: { stroke: "oklch(0.78 0.16 61)", strokeWidth: 2 },
+    style: { stroke: "var(--primary)", strokeWidth: 2 },
   },
   {
     id: "e-provider-ai",
@@ -147,7 +147,7 @@ const processEdges: Edge[] = [
     target: "ai",
     type: "smoothstep",
     animated: true,
-    style: { stroke: "oklch(0.78 0.16 61)", strokeWidth: 2 },
+    style: { stroke: "var(--primary)", strokeWidth: 2 },
   },
   {
     id: "e-ai-brief",
@@ -155,28 +155,28 @@ const processEdges: Edge[] = [
     target: "brief",
     type: "smoothstep",
     animated: true,
-    style: { stroke: "oklch(0.77 0.134 178)", strokeWidth: 2 },
+    style: { stroke: "var(--accent)", strokeWidth: 2 },
   },
   {
     id: "e-brief-edit",
     source: "brief",
     target: "edit",
     type: "smoothstep",
-    style: { stroke: "oklch(0.77 0.134 178)", strokeWidth: 2 },
+    style: { stroke: "var(--accent)", strokeWidth: 2 },
   },
   {
     id: "e-edit-export",
     source: "edit",
     target: "export",
     type: "smoothstep",
-    style: { stroke: "oklch(0.72 0.16 25)", strokeWidth: 2 },
+    style: { stroke: "var(--chart-4)", strokeWidth: 2 },
   },
   {
     id: "e-edit-prompt",
     source: "edit",
     target: "prompt",
     type: "smoothstep",
-    style: { stroke: "oklch(0.65 0.15 145)", strokeWidth: 2 },
+    style: { stroke: "var(--chart-5)", strokeWidth: 2 },
   },
 ];
 

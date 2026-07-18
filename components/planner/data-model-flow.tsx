@@ -55,9 +55,9 @@ function buildDataModelEdges(
     label: rel.label,
     type: "smoothstep",
     animated: true,
-    style: { stroke: "oklch(0.77 0.134 178)", strokeWidth: 2 },
+    style: { stroke: "var(--accent)", strokeWidth: 2 },
     labelStyle: {
-      fill: "oklch(0.73 0.042 88)",
+      fill: "var(--muted-foreground)",
       fontSize: 10,
       fontFamily: "var(--font-code)",
     },

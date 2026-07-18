@@ -34,31 +34,31 @@
 }
 
 :root {
-  --background: oklch(0.95 0.04 86);
-  --foreground: oklch(0.17 0.055 252);
-  --card: oklch(0.98 0.03 92 / 84%);
-  --card-foreground: oklch(0.17 0.055 252);
+  --background: oklch(0.17 0.055 252);
+  --foreground: oklch(0.95 0.04 88);
+  --card: oklch(0.22 0.06 252 / 80%);
+  --card-foreground: oklch(0.95 0.04 88);
   --primary: oklch(0.80 0.19 61);
-  --primary-foreground: oklch(0.98 0.02 88);
-  --secondary: oklch(0.88 0.07 184 / 80%);
-  --secondary-foreground: oklch(0.17 0.055 252);
-  --muted: oklch(0.90 0.04 84 / 68%);
-  --muted-foreground: oklch(0.44 0.05 252);
+  --primary-foreground: oklch(0.17 0.055 252);
+  --secondary: oklch(0.28 0.08 244 / 78%);
+  --secondary-foreground: oklch(0.95 0.04 88);
+  --muted: oklch(0.28 0.07 252 / 68%);
+  --muted-foreground: oklch(0.75 0.055 88);
   --accent: oklch(0.79 0.16 178);
   --accent-foreground: oklch(0.17 0.055 252);
   --destructive: oklch(0.70 0.23 31);
   --destructive-foreground: oklch(0.98 0.02 88);
-  --border: oklch(0.26 0.05 252 / 22%);
+  --border: oklch(0.98 0.02 88 / 18%);
   --ring: oklch(0.82 0.17 178);
-  --input: oklch(0.26 0.05 252 / 22%);
+  --input: oklch(0.98 0.02 88 / 18%);
   --chart-1: oklch(0.80 0.19 61);
   --chart-2: oklch(0.79 0.16 178);
   --chart-3: oklch(0.74 0.21 290);
   --chart-4: oklch(0.80 0.19 25);
   --chart-5: oklch(0.74 0.18 145);
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-display-family: "Fraunces", serif;
-  --font-code: "IBM Plex Mono", monospace;
+  --font-body: var(--font-ibm-plex-sans), system-ui, sans-serif;
+  --font-display-family: var(--font-fraunces), Georgia, serif;
+  --font-code: var(--font-ibm-plex-mono), ui-monospace, monospace;
   --ut-planner-gradient: oklch(0.17 0.055 252 / 70%);
   --ut-planner-grid: oklch(0.79 0.16 178 / 12%);
   --ut-planner-radial1: oklch(0.80 0.19 61 / 20%);
@@ -79,31 +79,6 @@
   --ut-cmd-to: oklch(0.67 0.20 290);
   --ut-cmd-text: oklch(0.98 0.02 88);
   --ut-micro-color: oklch(0.75 0.055 88);
-}
-
-.dark {
-  --background: oklch(0.17 0.055 252);
-  --foreground: oklch(0.95 0.04 88);
-  --card: oklch(0.22 0.06 252 / 80%);
-  --card-foreground: oklch(0.95 0.04 88);
-  --primary: oklch(0.80 0.19 61);
-  --primary-foreground: oklch(0.17 0.055 252);
-  --secondary: oklch(0.28 0.08 244 / 78%);
-  --secondary-foreground: oklch(0.95 0.04 88);
-  --muted: oklch(0.28 0.07 252 / 68%);
-  --muted-foreground: oklch(0.75 0.055 88);
-  --accent: oklch(0.79 0.16 178);
-  --accent-foreground: oklch(0.17 0.055 252);
-  --destructive: oklch(0.70 0.23 31);
-  --destructive-foreground: oklch(0.98 0.02 88);
-  --border: oklch(0.98 0.02 88 / 22%);
-  --ring: oklch(0.82 0.17 178);
-  --input: oklch(0.98 0.02 88 / 22%);
-  --chart-1: oklch(0.80 0.19 61);
-  --chart-2: oklch(0.79 0.16 178);
-  --chart-3: oklch(0.74 0.21 290);
-  --chart-4: oklch(0.80 0.19 25);
-  --chart-5: oklch(0.74 0.18 145);
 }
 
 * {
@@ -248,8 +223,8 @@ body {
 
 /* Roadmap drag-and-drop styles */
 .roadmap-drop-active {
-  background: oklch(0.79 0.16 178 / 8%);
-  border: 1px dashed oklch(0.79 0.16 178 / 40%);
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
+  border: 1px dashed color-mix(in oklch, var(--accent) 40%, transparent);
 }
 
 .roadmap-dragging {
