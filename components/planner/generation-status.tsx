@@ -4,14 +4,28 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
+type GenerationSection = "overview" | "starter-prompt" | "formatting" | "done";
+
 interface GenerationStatusProps {
   status: "idle" | "generating" | "done" | "error";
   progress: string;
+  section?: GenerationSection;
   error?: string;
 }
 
-export function GenerationStatus({ status, progress, error }: GenerationStatusProps) {
+const sectionLabels: Record<GenerationSection, string> = {
+  "overview": "Generating brief overview...",
+  "starter-prompt": "Generating starter prompt...",
+  "formatting": "Formatting markdown brief...",
+  "done": "Complete",
+};
+
+export function GenerationStatus({ status, progress, section, error }: GenerationStatusProps) {
   if (status === "idle") return null;
+
+  const displayProgress = section && sectionLabels[section]
+    ? sectionLabels[section]
+    : progress;
 
   return (
     <div className={cn(
@@ -26,9 +40,9 @@ export function GenerationStatus({ status, progress, error }: GenerationStatusPr
           {status === "done" && "Complete"}
           {status === "error" && "Error"}
         </Badge>
-        {progress && status === "generating" && (
+        {displayProgress && status === "generating" && (
           <span className="text-xs text-muted-foreground truncate max-w-lg">
-            {progress.slice(0, 120)}...
+            {displayProgress}
           </span>
         )}
       </div>

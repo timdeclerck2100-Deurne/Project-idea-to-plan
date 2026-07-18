@@ -31,7 +31,7 @@ export const buildPhaseSchema = z.object({
   deliverables: z.array(z.string()),
 });
 
-export const projectBriefSchema = z.object({
+export const briefOverviewSchema = z.object({
   appName: z.string(),
   appSummary: z.string(),
   targetUsers: z.array(z.string()),
@@ -50,10 +50,19 @@ export const projectBriefSchema = z.object({
   }),
   buildPhases: z.array(buildPhaseSchema),
   risksEdgeCases: z.array(z.string()),
+});
+
+export const starterPromptSchema = z.object({
+  starterPrompt: z.string(),
+});
+
+export const projectBriefSchema = briefOverviewSchema.extend({
   starterPrompt: z.string(),
   markdownBrief: z.string(),
 });
 
+export type BriefOverview = z.infer<typeof briefOverviewSchema>;
+export type StarterPromptResult = z.infer<typeof starterPromptSchema>;
 export type Entity = z.infer<typeof entitySchema>;
 export type Relationship = z.infer<typeof relationshipSchema>;
 export type PageRoute = z.infer<typeof pageRouteSchema>;

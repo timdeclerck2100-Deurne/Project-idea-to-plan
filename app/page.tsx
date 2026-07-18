@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { parsePartialJson } from "ai";
-import { projectBriefSchema, type ProjectBrief } from "@/lib/brief-schema";
+import { briefOverviewSchema, type ProjectBrief } from "@/lib/brief-schema";
+import { generateMarkdownBrief } from "@/lib/planner-prompt";
 import { PlannerShell } from "@/components/planner/planner-shell";
 import { IdeaInput } from "@/components/planner/idea-input";
 import { ProviderSettings } from "@/components/planner/provider-settings";
@@ -49,6 +50,7 @@ export default function Home() {
   const [brief, setBrief] = React.useState<ProjectBrief>(emptyBrief);
   const [status, setStatus] = React.useState<"idle" | "questions" | "generating" | "done" | "error">("idle");
   const [progress, setProgress] = React.useState("");
+  const [section, setSection] = React.useState<"overview" | "starter-prompt" | "formatting" | "done">("done");
   const [error, setError] = React.useState<string>();
   const [isUpdatingExports, setIsUpdatingExports] = React.useState(false);
   const [questions, setQuestions] = React.useState<ClarifyingQuestion[]>([]);
@@ -121,9 +123,11 @@ export default function Home() {
     setProgress("Connecting to provider...");
     setError(undefined);
     setBrief(emptyBrief);
+    setSection("overview");
 
     try {
-      const response = await fetch("/api/brief", {
+      // Step 1: Generate brief overview
+      const overviewResponse = await fetch("/api/brief", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -132,41 +136,41 @@ export default function Home() {
           model: model.trim(),
           apiKey: apiKey || undefined,
           answers,
+          section: "overview",
         }),
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to generate brief.");
+      if (!overviewResponse.ok) {
+        const errData = await overviewResponse.json();
+        throw new Error(errData.error || "Failed to generate brief overview.");
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body.");
+      const overviewReader = overviewResponse.body?.getReader();
+      if (!overviewReader) throw new Error("No response body.");
 
       const decoder = new TextDecoder();
-      let fullText = "";
-      let lastApplied = "";
+      let overviewText = "";
+      let lastOverviewApplied = "";
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await overviewReader.read();
         if (done) break;
 
-        fullText += decoder.decode(value, { stream: true });
-        setProgress(fullText.slice(0, 600));
+        overviewText += decoder.decode(value, { stream: true });
 
-        const { value: partial, state } = await parsePartialJson(fullText);
+        const { value: partial, state } = await parsePartialJson(overviewText);
         if (
           state !== "undefined-input" &&
           state !== "failed-parse" &&
           partial &&
           typeof partial === "object" &&
           "appSummary" in partial &&
-          partial.appSummary !== lastApplied
+          partial.appSummary !== lastOverviewApplied
         ) {
-          lastApplied = partial.appSummary as string;
+          lastOverviewApplied = partial.appSummary as string;
           try {
-            const validated = projectBriefSchema.partial().parse(partial);
+            const validated = briefOverviewSchema.partial().parse(partial);
             setBrief((prev) => ({
               ...prev,
               ...(validated as Partial<ProjectBrief>),
@@ -177,24 +181,77 @@ export default function Home() {
         }
       }
 
-      setProgress("Finalizing...");
-
-      const { value: final, state } = await parsePartialJson(fullText);
-      if (state === "successful-parse" || state === "repaired-parse") {
-        const validated = projectBriefSchema.parse(final);
-        setBrief(validated);
-        setStatus("done");
-        setProgress("");
-      } else {
+      const { value: finalOverview, state: overviewState } = await parsePartialJson(overviewText);
+      if (overviewState !== "successful-parse" && overviewState !== "repaired-parse") {
         throw new Error(
-          "The provider response could not be parsed as a valid ProjectBrief. " +
+          "The provider response could not be parsed as a valid BriefOverview. " +
           "Check that your model supports structured output."
         );
       }
+
+      const validatedOverview = briefOverviewSchema.parse(finalOverview);
+      setBrief((prev) => ({ ...prev, ...validatedOverview }));
+
+      // Step 2: Generate starter prompt
+      setSection("starter-prompt");
+      setProgress("Generating starter prompt...");
+
+      const starterResponse = await fetch("/api/brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          section: "starter-prompt",
+          brief: validatedOverview,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!starterResponse.ok) {
+        const errData = await starterResponse.json();
+        throw new Error(errData.error || "Failed to generate starter prompt.");
+      }
+
+      const starterReader = starterResponse.body?.getReader();
+      if (!starterReader) throw new Error("No response body.");
+
+      let starterText = "";
+
+      while (true) {
+        const { done, value } = await starterReader.read();
+        if (done) break;
+        starterText += decoder.decode(value, { stream: true });
+      }
+
+      const { value: finalStarter, state: starterState } = await parsePartialJson(starterText);
+      if (starterState !== "successful-parse" && starterState !== "repaired-parse") {
+        throw new Error(
+          "The starter prompt response could not be parsed. " +
+          "Check that your model supports structured output."
+        );
+      }
+
+      const validatedStarter = { starterPrompt: (finalStarter as { starterPrompt: string }).starterPrompt };
+      setBrief((prev) => ({ ...prev, ...validatedStarter }));
+
+      // Step 3: Generate markdown brief client-side
+      setSection("formatting");
+      setProgress("Formatting markdown brief...");
+
+      const fullBrief = { ...validatedOverview, ...validatedStarter };
+      const markdownBrief = generateMarkdownBrief(fullBrief);
+      setBrief((prev) => ({ ...prev, markdownBrief }));
+
+      setSection("done");
+      setStatus("done");
+      setProgress("");
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setStatus("idle");
         setProgress("");
+        setSection("done");
       } else {
         setStatus("error");
         setError(err instanceof Error ? err.message : "An unexpected error occurred.");
@@ -251,6 +308,7 @@ export default function Home() {
     setBrief(emptyBrief);
     setStatus("idle");
     setProgress("");
+    setSection("done");
     setError(undefined);
     setQuestions([]);
   }, []);
@@ -313,7 +371,7 @@ export default function Home() {
         </div>
       </Card>
 
-      {status !== "questions" && <GenerationStatus status={status} progress={progress} error={error} />}
+      {status !== "questions" && <GenerationStatus status={status} progress={progress} section={section} error={error} />}
 
       {/* Main content — fills all remaining space */}
       {status === "questions" && (

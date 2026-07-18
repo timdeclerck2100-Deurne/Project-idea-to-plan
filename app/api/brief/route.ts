@@ -2,69 +2,27 @@ import { NextRequest } from "next/server";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { streamObject } from "ai";
 import { z } from "zod";
-import { buildPlannerSystemPrompt, buildPlannerUserPrompt } from "@/lib/planner-prompt";
+import {
+  buildPlannerSystemPrompt,
+  buildPlannerUserPrompt,
+  buildBriefOverviewSystemPrompt,
+  buildBriefOverviewUserPrompt,
+  buildStarterPromptSystemPrompt,
+  buildStarterPromptUserPrompt,
+} from "@/lib/planner-prompt";
 import { validateEndpointUrl, sanitizeError } from "@/lib/provider-validation";
+import { briefOverviewSchema, starterPromptSchema, projectBriefSchema } from "@/lib/brief-schema";
 
-const relationshipSchema = z.object({
-  source: z.string(),
-  target: z.string(),
-  label: z.string(),
-  type: z.string(),
-});
-
-const projectBriefSchema = z.object({
-  appName: z.string(),
-  appSummary: z.string(),
-  targetUsers: z.array(z.string()),
-  coreFeatures: z.array(z.string()),
-  recommendedTechStack: z.object({
-    frontend: z.array(z.string()),
-    backend: z.array(z.string()),
-    database: z.array(z.string()),
-    ai: z.array(z.string()),
-    deployment: z.array(z.string()),
-  }),
-  pagesRoutes: z.array(
-    z.object({
-      path: z.string(),
-      purpose: z.string(),
-      keyComponents: z.array(z.string()),
-    })
-  ),
-  dataModel: z.object({
-    entities: z.array(
-      z.object({
-        name: z.string(),
-        description: z.string(),
-        fields: z.array(
-          z.object({
-            name: z.string(),
-            type: z.string(),
-            description: z.string().optional(),
-          })
-        ),
-      })
-    ),
-    relationships: z.array(relationshipSchema),
-  }),
-  buildPhases: z.array(
-    z.object({
-      name: z.string(),
-      goals: z.array(z.string()),
-      deliverables: z.array(z.string()),
-    })
-  ),
-  risksEdgeCases: z.array(z.string()),
-  starterPrompt: z.string(),
-  markdownBrief: z.string(),
-});
+const sectionSchema = z.enum(["overview", "starter-prompt"]);
 
 const requestBodySchema = z.object({
-  idea: z.string().min(1, "App idea is required."),
+  idea: z.string().min(1, "App idea is required.").optional(),
   baseUrl: z.string().min(1, "Base URL is required."),
   model: z.string().min(1, "Model name is required."),
   apiKey: z.string().optional(),
   answers: z.record(z.string(), z.string()).optional(),
+  section: sectionSchema.optional(),
+  brief: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -79,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { idea, baseUrl, model, apiKey, answers } = parsed.data;
+    const { idea, baseUrl, model, apiKey, answers, section, brief } = parsed.data;
 
     const isDev = process.env.NODE_ENV === "development";
     const validation = validateEndpointUrl(baseUrl, isDev);
@@ -93,6 +51,54 @@ export async function POST(request: NextRequest) {
       baseURL: validation.url.href.replace(/\/+$/, ""),
       apiKey: apiKey || "no-key",
     });
+
+    if (section === "starter-prompt") {
+      if (!brief) {
+        return Response.json(
+          { error: "Brief data is required for starter-prompt section." },
+          { status: 400 }
+        );
+      }
+
+      const result = streamObject({
+        model: provider(model),
+        schema: starterPromptSchema,
+        system: buildStarterPromptSystemPrompt(),
+        messages: [{ role: "user", content: buildStarterPromptUserPrompt(brief) }],
+        temperature: 0.7,
+        abortSignal: request.signal,
+      });
+
+      return result.toTextStreamResponse();
+    }
+
+    if (section === "overview") {
+      if (!idea) {
+        return Response.json(
+          { error: "Idea is required for overview section." },
+          { status: 400 }
+        );
+      }
+
+      const result = streamObject({
+        model: provider(model),
+        schema: briefOverviewSchema,
+        system: buildBriefOverviewSystemPrompt(),
+        messages: [{ role: "user", content: buildBriefOverviewUserPrompt(idea, answers) }],
+        temperature: 0.7,
+        abortSignal: request.signal,
+      });
+
+      return result.toTextStreamResponse();
+    }
+
+    // Backward compatibility: no section = full brief generation
+    if (!idea) {
+      return Response.json(
+        { error: "App idea is required." },
+        { status: 400 }
+      );
+    }
 
     const result = streamObject({
       model: provider(model),
