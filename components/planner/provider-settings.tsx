@@ -25,7 +25,7 @@ export function ProviderSettings({
 }: ProviderSettingsProps) {
   return (
     <div className="flex gap-2">
-      <div className="space-y-1">
+      <div className="flex-1 space-y-1 min-w-0">
         <Label htmlFor="baseUrl" className="micro-label">
           Base URL
         </Label>
@@ -35,10 +35,10 @@ export function ProviderSettings({
           value={baseUrl}
           onChange={(e) => onBaseUrlChange(e.target.value)}
           disabled={disabled}
-          className="h-8 text-xs w-52"
+          className="h-8 text-xs"
         />
       </div>
-      <div className="space-y-1">
+      <div className="flex-1 space-y-1 min-w-0">
         <Label htmlFor="model" className="micro-label">
           Model
         </Label>
@@ -48,10 +48,10 @@ export function ProviderSettings({
           value={model}
           onChange={(e) => onModelChange(e.target.value)}
           disabled={disabled}
-          className="h-8 text-xs w-28"
+          className="h-8 text-xs"
         />
       </div>
-      <div className="space-y-1">
+      <div className="flex-1 space-y-1 min-w-0">
         <Label htmlFor="apiKey" className="micro-label">
           API Key <span className="text-muted-foreground">(opt)</span>
         </Label>
@@ -62,7 +62,7 @@ export function ProviderSettings({
           value={apiKey}
           onChange={(e) => onApiKeyChange(e.target.value)}
           disabled={disabled}
-          className="h-8 text-xs w-32"
+          className="h-8 text-xs"
         />
       </div>
     </div>

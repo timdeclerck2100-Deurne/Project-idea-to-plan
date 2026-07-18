@@ -3,17 +3,26 @@
 import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Copy, Check, Download, Loader2 } from "lucide-react";
+import { Copy, Check, Download, Loader2, Pencil } from "lucide-react";
 
 interface StarterPromptCardProps {
   prompt: string;
   filename?: string;
   isUpdating?: boolean;
+  onUpdate?: (feedback: string) => void;
 }
 
-export function StarterPromptCard({ prompt, filename = "starter-prompt.txt", isUpdating = false }: StarterPromptCardProps) {
+export function StarterPromptCard({
+  prompt,
+  filename = "starter-prompt.txt",
+  isUpdating = false,
+  onUpdate,
+}: StarterPromptCardProps) {
   const [copied, setCopied] = React.useState(false);
+  const [showFeedback, setShowFeedback] = React.useState(false);
+  const [feedback, setFeedback] = React.useState("");
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prompt);
@@ -31,6 +40,19 @@ export function StarterPromptCard({ prompt, filename = "starter-prompt.txt", isU
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleApply = () => {
+    if (feedback.trim() && onUpdate) {
+      onUpdate(feedback.trim());
+      setFeedback("");
+      setShowFeedback(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFeedback("");
+    setShowFeedback(false);
   };
 
   return (
@@ -53,8 +75,55 @@ export function StarterPromptCard({ prompt, filename = "starter-prompt.txt", isU
             <Download className="h-3 w-3" />
             Download
           </Button>
+          {onUpdate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFeedback(!showFeedback)}
+              disabled={isUpdating}
+              className="h-7 px-2 text-xs"
+            >
+              <Pencil className="h-3 w-3" />
+              Update
+            </Button>
+          )}
         </div>
       </div>
+
+      {showFeedback && (
+        <div className="mb-2 space-y-2 animate-fade-up">
+          <Textarea
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            placeholder="Describe what you want changed..."
+            rows={2}
+            className="text-xs resize-none"
+          />
+          <div className="flex gap-1.5 justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              className="h-6 px-2 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleApply}
+              disabled={!feedback.trim() || isUpdating}
+              className="h-6 px-2 text-xs"
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                "Apply"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <ScrollArea className="max-h-[350px]">
         {isUpdating ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ClarifyingQuestions, type ClarifyingQuestion } from "@/components/planner/clarifying-questions";
 import { Sparkles, RotateCcw, Square } from "lucide-react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { ThemeSelector } from "@/components/theme-selector";
 
 const STORAGE_KEY_BASE_URL = "planner-base-url";
 const STORAGE_KEY_MODEL = "planner-model";
@@ -53,6 +54,7 @@ export default function Home() {
   const [section, setSection] = React.useState<"overview" | "starter-prompt" | "formatting" | "done">("done");
   const [error, setError] = React.useState<string>();
   const [isUpdatingExports, setIsUpdatingExports] = React.useState(false);
+  const [isUpdatingStarterPrompt, setIsUpdatingStarterPrompt] = React.useState(false);
   const [questions, setQuestions] = React.useState<ClarifyingQuestion[]>([]);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
@@ -303,6 +305,66 @@ export default function Home() {
     }
   }, [brief, baseUrl, model, apiKey]);
 
+  const handleUpdateStarterPrompt = React.useCallback(async (feedback: string) => {
+    if (!baseUrl.trim() || !model.trim() || !brief.appSummary) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsUpdatingStarterPrompt(true);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: baseUrl.trim(),
+          model: model.trim(),
+          apiKey: apiKey || undefined,
+          section: "starter-prompt",
+          brief,
+          feedback,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to update starter prompt.");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body.");
+
+      const decoder = new TextDecoder();
+      let text = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+      }
+
+      const { value: final, state } = await parsePartialJson(text);
+      if (state === "successful-parse" || state === "repaired-parse") {
+        const validated = { starterPrompt: (final as { starterPrompt: string }).starterPrompt };
+        setBrief((prev) => ({ ...prev, ...validated }));
+      } else {
+        throw new Error("The starter prompt response could not be parsed.");
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // Aborted, do nothing
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to update starter prompt.");
+      }
+    } finally {
+      setIsUpdatingStarterPrompt(false);
+      abortRef.current = null;
+    }
+  }, [brief, baseUrl, model, apiKey]);
+
   const handleReset = React.useCallback(() => {
     abortRef.current?.abort();
     setBrief(emptyBrief);
@@ -319,11 +381,15 @@ export default function Home() {
     <PlannerShell>
       {/* Top command bar */}
       <Card className="glass-panel rounded-xl px-4 py-3 mb-3 flex-shrink-0 animate-fade-up">
-        <div className="flex items-end gap-3">
-          <div className="flex-1 min-w-0">
+        <div className="flex gap-4">
+          {/* Left: App idea textarea (2/3) */}
+          <div className="w-2/3 min-w-0">
             <IdeaInput value={idea} onChange={setIdea} disabled={status === "generating" || status === "questions"} />
           </div>
-          <div className="flex-shrink-0">
+
+          {/* Right: Settings + actions (1/3) */}
+          <div className="w-1/3 flex flex-col gap-2">
+            {/* Top line: provider fields */}
             <ProviderSettings
               baseUrl={baseUrl}
               onBaseUrlChange={handleBaseUrlChange}
@@ -333,40 +399,43 @@ export default function Home() {
               onApiKeyChange={setApiKey}
               disabled={status === "generating" || status === "questions"}
             />
-          </div>
-          <div className="flex gap-2 flex-shrink-0 items-center">
-            <Badge
-              variant={status === "generating" ? "accent" : status === "questions" ? "accent" : status === "error" ? "destructive" : "outline"}
-              className="hidden sm:inline-flex"
-            >
-              {status === "idle" && "Ready"}
-              {status === "questions" && "Questions..."}
-              {status === "generating" && "Generating..."}
-              {status === "done" && "Complete"}
-              {status === "error" && "Error"}
-            </Badge>
-            {(status === "generating" || (status === "questions" && !isGeneratingQuestions)) ? (
-              <Button
-                onClick={handleStop}
-                className="bg-destructive/80 hover:bg-destructive text-destructive-foreground"
+
+            {/* Bottom line: theme + actions */}
+            <div className="flex items-center gap-2">
+              <ThemeSelector />
+              <Badge
+                variant={status === "generating" ? "accent" : status === "questions" ? "accent" : status === "error" ? "destructive" : "outline"}
               >
-                <Square className="h-4 w-4" />
-                Stop
-              </Button>
-            ) : (
-              <Button
-                onClick={handleGenerate}
-                disabled={!idea.trim() || !baseUrl.trim() || !model.trim() || status === "questions"}
-              >
-                <Sparkles className="h-4 w-4" />
-                Generate
-              </Button>
-            )}
-            {status !== "idle" && (
-              <Button variant="outline" onClick={handleReset}>
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            )}
+                {status === "idle" && "Ready"}
+                {status === "questions" && "Questions..."}
+                {status === "generating" && "Generating..."}
+                {status === "done" && "Complete"}
+                {status === "error" && "Error"}
+              </Badge>
+              <div className="flex-1" />
+              {(status === "generating" || (status === "questions" && !isGeneratingQuestions)) ? (
+                <Button
+                  onClick={handleStop}
+                  className="bg-destructive/80 hover:bg-destructive text-destructive-foreground"
+                >
+                  <Square className="h-4 w-4" />
+                  Stop
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!idea.trim() || !baseUrl.trim() || !model.trim() || status === "questions"}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Generate
+                </Button>
+              )}
+              {status !== "idle" && (
+                <Button variant="outline" onClick={handleReset}>
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </Card>
@@ -418,6 +487,8 @@ export default function Home() {
             onBriefChange={setBrief}
             onUpdateExports={handleUpdateExports}
             isUpdatingExports={isUpdatingExports}
+            onUpdateStarterPrompt={handleUpdateStarterPrompt}
+            isUpdatingStarterPrompt={isUpdatingStarterPrompt}
           />
         </div>
       )}

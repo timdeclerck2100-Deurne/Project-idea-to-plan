@@ -23,6 +23,7 @@ const requestBodySchema = z.object({
   answers: z.record(z.string(), z.string()).optional(),
   section: sectionSchema.optional(),
   brief: z.record(z.string(), z.unknown()).optional(),
+  feedback: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { idea, baseUrl, model, apiKey, answers, section, brief } = parsed.data;
+    const { idea, baseUrl, model, apiKey, answers, section, brief, feedback } = parsed.data;
 
     const isDev = process.env.NODE_ENV === "development";
     const validation = validateEndpointUrl(baseUrl, isDev);
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
         model: provider(model),
         schema: starterPromptSchema,
         system: buildStarterPromptSystemPrompt(),
-        messages: [{ role: "user", content: buildStarterPromptUserPrompt(brief) }],
+        messages: [{ role: "user", content: buildStarterPromptUserPrompt(brief, feedback) }],
         temperature: 0.7,
         abortSignal: request.signal,
       });

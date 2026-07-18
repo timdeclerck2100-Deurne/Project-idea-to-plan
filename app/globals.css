@@ -59,6 +59,26 @@
   --font-body: "IBM Plex Sans", sans-serif;
   --font-display-family: "Fraunces", serif;
   --font-code: "IBM Plex Mono", monospace;
+  --ut-planner-gradient: oklch(0.15 0.038 252 / 60%);
+  --ut-planner-grid: oklch(0.77 0.134 178 / 4%);
+  --ut-planner-radial1: oklch(0.78 0.16 61 / 8%);
+  --ut-planner-radial2: oklch(0.77 0.134 178 / 6%);
+  --ut-glass-bg: oklch(0.205 0.044 252 / 65%);
+  --ut-glass-border: oklch(0.98 0.02 88 / 10%);
+  --ut-glass-shadow: oklch(0.1 0.02 252 / 40%);
+  --ut-glass-inset: oklch(0.98 0.02 88 / 8%);
+  --ut-paper-bg: oklch(0.205 0.044 252 / 55%);
+  --ut-paper-border: oklch(0.98 0.02 88 / 10%);
+  --ut-paper-shadow: oklch(0.1 0.02 252 / 25%);
+  --ut-paper-inset: oklch(0.98 0.02 88 / 6%);
+  --ut-bp-grid: oklch(0.77 0.134 178 / 6%);
+  --ut-bp-bg: oklch(0.15 0.038 252 / 80%);
+  --ut-bp-border: oklch(0.77 0.134 178 / 10%);
+  --ut-cmd-from: oklch(0.68 0.165 55);
+  --ut-cmd-via: oklch(0.78 0.122 174);
+  --ut-cmd-to: oklch(0.65 0.18 290);
+  --ut-cmd-text: oklch(0.98 0.02 88);
+  --ut-micro-color: oklch(0.73 0.042 88);
 }
 
 .dark {
@@ -100,22 +120,22 @@ body {
   position: relative;
   background:
     linear-gradient(
-      oklch(0.15 0.038 252 / 60%),
-      oklch(0.15 0.038 252 / 95%)
+      var(--ut-planner-gradient),
+      var(--background)
     ),
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 39px,
-      oklch(0.77 0.134 178 / 4%) 39px,
-      oklch(0.77 0.134 178 / 4%) 40px
+      var(--ut-planner-grid) 39px,
+      var(--ut-planner-grid) 40px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 39px,
-      oklch(0.77 0.134 178 / 4%) 39px,
-      oklch(0.77 0.134 178 / 4%) 40px
+      var(--ut-planner-grid) 39px,
+      var(--ut-planner-grid) 40px
     );
 }
 
@@ -125,7 +145,7 @@ body {
   inset: 0;
   background: radial-gradient(
     ellipse 600px 400px at 15% 20%,
-    oklch(0.78 0.16 61 / 8%),
+    var(--ut-planner-radial1),
     transparent
   );
   pointer-events: none;
@@ -137,28 +157,28 @@ body {
   inset: 0;
   background: radial-gradient(
     ellipse 500px 500px at 85% 70%,
-    oklch(0.77 0.134 178 / 6%),
+    var(--ut-planner-radial2),
     transparent
   );
   pointer-events: none;
 }
 
 .glass-panel {
-  background: oklch(0.205 0.044 252 / 65%);
+  background: var(--ut-glass-bg);
   backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid oklch(0.98 0.02 88 / 10%);
+  border: 1px solid var(--ut-glass-border);
   box-shadow:
-    inset 0 1px 0 oklch(0.98 0.02 88 / 8%),
-    0 8px 32px oklch(0.1 0.02 252 / 40%);
+    inset 0 1px 0 var(--ut-glass-inset),
+    0 8px 32px var(--ut-glass-shadow);
 }
 
 .paper-card {
-  background: oklch(0.205 0.044 252 / 55%);
+  background: var(--ut-paper-bg);
   backdrop-filter: blur(8px) saturate(1.2);
-  border: 1px solid oklch(0.98 0.02 88 / 10%);
+  border: 1px solid var(--ut-paper-border);
   box-shadow:
-    inset 0 1px 0 oklch(0.98 0.02 88 / 6%),
-    0 4px 16px oklch(0.1 0.02 252 / 25%);
+    inset 0 1px 0 var(--ut-paper-inset),
+    0 4px 16px var(--ut-paper-shadow);
 }
 
 .blueprint-surface {
@@ -167,23 +187,23 @@ body {
       0deg,
       transparent,
       transparent 23px,
-      oklch(0.77 0.134 178 / 6%) 23px,
-      oklch(0.77 0.134 178 / 6%) 24px
+      var(--ut-bp-grid) 23px,
+      var(--ut-bp-grid) 24px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 23px,
-      oklch(0.77 0.134 178 / 6%) 23px,
-      oklch(0.77 0.134 178 / 6%) 24px
+      var(--ut-bp-grid) 23px,
+      var(--ut-bp-grid) 24px
     ),
-    oklch(0.15 0.038 252 / 80%);
-  border: 1px solid oklch(0.77 0.134 178 / 10%);
+    var(--ut-bp-bg);
+  border: 1px solid var(--ut-bp-border);
 }
 
 .command-strip {
-  background: linear-gradient(135deg, oklch(0.68 0.165 55), oklch(0.78 0.122 174) 50%, oklch(0.65 0.18 290));
-  color: oklch(0.98 0.02 88);
+  background: linear-gradient(135deg, var(--ut-cmd-from), var(--ut-cmd-via) 50%, var(--ut-cmd-to));
+  color: var(--ut-cmd-text);
   font-weight: 700;
 }
 
@@ -193,7 +213,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: oklch(0.73 0.042 88);
+  color: var(--ut-micro-color);
 }
 
 @keyframes fade-up {

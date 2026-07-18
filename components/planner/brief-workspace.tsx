@@ -21,6 +21,8 @@ interface BriefWorkspaceProps {
   onBriefChange: (brief: ProjectBrief) => void;
   onUpdateExports?: () => void;
   isUpdatingExports?: boolean;
+  onUpdateStarterPrompt?: (feedback: string) => void;
+  isUpdatingStarterPrompt?: boolean;
 }
 
 function ArrayEditor({
@@ -326,7 +328,14 @@ function BuildPhasesEditor({
   );
 }
 
-export function BriefWorkspace({ brief, onBriefChange, onUpdateExports, isUpdatingExports = false }: BriefWorkspaceProps) {
+export function BriefWorkspace({
+  brief,
+  onBriefChange,
+  onUpdateExports,
+  isUpdatingExports = false,
+  onUpdateStarterPrompt,
+  isUpdatingStarterPrompt = false,
+}: BriefWorkspaceProps) {
   return (
     <div className="space-y-3 pb-8">
       {/* Row 0: App Name — full width */}
@@ -356,7 +365,11 @@ export function BriefWorkspace({ brief, onBriefChange, onUpdateExports, isUpdati
           <MarkdownExportCard markdown={brief.markdownBrief} isUpdating={isUpdatingExports} />
         )}
         {brief.starterPrompt && (
-          <StarterPromptCard prompt={brief.starterPrompt} isUpdating={isUpdatingExports} />
+          <StarterPromptCard
+            prompt={brief.starterPrompt}
+            isUpdating={isUpdatingExports || isUpdatingStarterPrompt}
+            onUpdate={onUpdateStarterPrompt}
+          />
         )}
       </div>
 

@@ -22,7 +22,7 @@ export function IdeaInput({ value, onChange, disabled }: IdeaInputProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="flex-1 min-h-[80px] resize-none text-sm"
+        className="flex-1 min-h-[60px] resize-none text-sm"
       />
     </div>
   );

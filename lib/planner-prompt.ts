@@ -171,13 +171,18 @@ JSON SCHEMA:
 }`;
 }
 
-export function buildStarterPromptUserPrompt(brief: Record<string, unknown>): string {
-  return `Here is the completed project brief. Write a detailed starter prompt for building this app.
+export function buildStarterPromptUserPrompt(brief: Record<string, unknown>, feedback?: string): string {
+  let prompt = `Here is the completed project brief. Write a detailed starter prompt for building this app.
 
 Project Brief:
-${JSON.stringify(brief, null, 2)}
+${JSON.stringify(brief, null, 2)}`;
 
-Return ONLY the JSON with the "starterPrompt" field, nothing else.`;
+  if (feedback) {
+    prompt += `\n\nThe user wants the following changes to the starter prompt:\n${feedback}\n\nRegenerate the starter prompt to incorporate this feedback while still covering all aspects of the brief.`;
+  }
+
+  prompt += `\n\nReturn ONLY the JSON with the "starterPrompt" field, nothing else.`;
+  return prompt;
 }
 
 export function buildQuestionsSystemPrompt(): string {
