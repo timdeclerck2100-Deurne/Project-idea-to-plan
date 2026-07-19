@@ -347,11 +347,12 @@ export function BriefWorkspace({
       {/* Row 2: Export cards — 2 columns */}
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
         {brief.markdownBrief && (
-          <MarkdownExportCard markdown={brief.markdownBrief} isUpdating={isUpdatingExports} />
+          <MarkdownExportCard markdown={brief.markdownBrief} filename={`${brief.appName}-project-brief.md`} isUpdating={isUpdatingExports} />
         )}
         {brief.starterPrompt && (
           <StarterPromptCard
             prompt={brief.starterPrompt}
+            filename={`${brief.appName}-starter-prompt.txt`}
             isUpdating={isUpdatingExports || isUpdatingStarterPrompt}
             onUpdate={onUpdateStarterPrompt}
           />
