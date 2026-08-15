@@ -77,15 +77,7 @@ Non-secret settings (base URL and model) are saved to `localStorage` automatical
 
 ## Deployment
 
-### Vercel (Recommended)
-
-1. Push your repository to GitHub.
-
-2. Go to [vercel.com/new](https://vercel.com/new) and import your repository.
-
-3. Vercel detects Next.js automatically — no configuration needed. Click **Deploy**.
-
-Your app will be live on a `.vercel.app` URL within seconds.
+Up to you to decide.
 
 ### Self-Hosted
 
