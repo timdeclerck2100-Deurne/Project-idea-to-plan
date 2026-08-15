@@ -48,6 +48,9 @@ next-env.d.ts
 # AI agent tooling
 .agents/
 
+# graphify
+graphify-out/
+
 # Documentation
 PLAN.md
 AGENTS.md
