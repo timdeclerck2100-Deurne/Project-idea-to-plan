@@ -10,16 +10,50 @@ import { Palette, Check } from "lucide-react";
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = React.useState(false);
-  const [pos, setPos] = React.useState({ top: 0, right: 0 });
+  const [pos, setPos] = React.useState({ top: 8, right: 8, maxHeight: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const panelId = React.useId();
+  const titleId = `${panelId}-title`;
 
-  function updatePosition() {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+  React.useLayoutEffect(() => {
+    if (!open) return;
+
+    function updatePosition() {
+      const trigger = triggerRef.current;
+      const panel = panelRef.current;
+      if (!trigger || !panel) return;
+
+      const margin = 8;
+      const rect = trigger.getBoundingClientRect();
+      const maxHeight = Math.max(0, window.innerHeight - margin * 2);
+      const panelHeight = Math.min(panel.scrollHeight, maxHeight);
+      const panelWidth = Math.min(panel.offsetWidth, window.innerWidth - margin * 2);
+      const maxTop = Math.max(margin, window.innerHeight - margin - panelHeight);
+      const maxRight = Math.max(margin, window.innerWidth - margin - panelWidth);
+
+      setPos({
+        top: Math.min(Math.max(rect.bottom + margin, margin), maxTop),
+        right: Math.min(
+          Math.max(window.innerWidth - rect.right, margin),
+          maxRight,
+        ),
+        maxHeight,
+      });
     }
-  }
+
+    updatePosition();
+    const selectedIndex = themes.findIndex(({ id }) => id === theme.id);
+    (optionRefs.current[selectedIndex] ?? optionRefs.current[0])?.focus();
+
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, theme.id]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -32,14 +66,22 @@ export function ThemeSelector() {
         triggerRef.current && triggerRef.current.contains(target)
       ) return;
       setOpen(false);
+      const focusableTarget = target instanceof Element && target.closest(
+        "button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+      );
+      if (!focusableTarget) triggerRef.current?.focus();
     }
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     }
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("click", handleClick);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("click", handleClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
@@ -48,18 +90,21 @@ export function ThemeSelector() {
     <>
       <button
         ref={triggerRef}
-        onClick={() => {
-          if (!open) updatePosition();
-          setOpen((o) => !o);
-        }}
+        type="button"
+        aria-label={`Choose theme. Current theme: ${theme.name}`}
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-haspopup="dialog"
+        data-theme-selector-trigger
+        onClick={() => setOpen((o) => !o)}
         className={cn(
-          "inline-flex items-center gap-2 h-8 rounded-lg px-3 text-xs font-semibold transition-all",
+          "inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-[background-color,border-color,transform]",
           "bg-card/30 backdrop-blur-sm border border-border text-foreground",
           "hover:bg-card/50 hover:border-accent/30 hover:-translate-y-0.5 active:translate-y-0",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         )}
       >
-        <Palette className="h-3.5 w-3.5" />
+        <Palette className="size-4" aria-hidden="true" />
         <span className="hidden sm:inline">{theme.name}</span>
         <span className="flex gap-0.5">
           {theme.swatches.map((swatch, i) => (
@@ -74,22 +119,36 @@ export function ThemeSelector() {
 
       {open && createPortal(
         <div
+          id={panelId}
           ref={panelRef}
-          className="fixed z-[9999] w-80 max-h-[70vh] overflow-y-auto rounded-xl glass-panel p-1.5 animate-scale-in"
-          style={{ top: pos.top, right: pos.right }}
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={titleId}
+          data-theme-selector-panel
+          className="glass-panel fixed z-[9999] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-xl p-1.5 animate-scale-in"
+          style={{ top: pos.top, right: pos.right, maxHeight: pos.maxHeight }}
         >
           <div className="p-2 pb-1.5">
-            <span className="micro-label">Theme</span>
+            <span id={titleId} className="micro-label">Theme</span>
           </div>
-          {themes.map((t) => (
+          {themes.map((t, index) => (
             <button
               key={t.id}
+              ref={(node) => {
+                optionRefs.current[index] = node;
+              }}
+              type="button"
+              aria-pressed={t.id === theme.id}
+              data-theme-option
+              data-theme-id={t.id}
               onClick={() => {
                 setTheme(t.id);
                 setOpen(false);
+                triggerRef.current?.focus();
               }}
               className={cn(
-                "w-full flex items-start gap-3 p-2.5 rounded-lg text-left transition-colors",
+                "flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 "hover:bg-muted/40",
                 t.id === theme.id && "bg-muted/50"
               )}
@@ -109,10 +168,10 @@ export function ThemeSelector() {
                     {t.name}
                   </span>
                   {t.id === theme.id && (
-                    <Check className="h-3.5 w-3.5 text-accent shrink-0" />
+                    <Check className="size-4 shrink-0 text-accent" aria-hidden="true" />
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">
+                <span className="line-clamp-1 text-sm text-muted-foreground">
                   {t.description}
                 </span>
               </div>

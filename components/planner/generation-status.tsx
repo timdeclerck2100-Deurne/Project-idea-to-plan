@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
@@ -17,9 +16,9 @@ interface GenerationStatusProps {
 }
 
 const sectionLabels: Record<GenerationSection, string> = {
-  "overview": "Generating brief overview...",
-  "starter-prompt": "Generating starter prompt...",
-  "formatting": "Formatting markdown brief...",
+  "overview": "Generating brief overview…",
+  "starter-prompt": "Generating starter prompt…",
+  "formatting": "Formatting markdown brief…",
   "done": "Complete",
 };
 
@@ -30,7 +29,7 @@ export function GenerationStatus({
   error,
   onRetry,
 }: GenerationStatusProps) {
-  if (status === "idle") return null;
+  if (status === "idle" || status === "done") return null;
 
   const displayProgress = section && sectionLabels[section]
     ? sectionLabels[section]
@@ -39,10 +38,9 @@ export function GenerationStatus({
   return (
     <div
       className={cn(
-        "rounded-xl border px-4 py-2.5 animate-fade-up",
-        status === "generating" && "bg-accent/10 border-accent/20",
-        status === "done" && "bg-primary/10 border-primary/20",
-        status === "error" && "bg-destructive/10 border-destructive/20"
+        "animate-fade-up border-y px-1 py-3 sm:px-2",
+        status === "generating" && "border-accent/30",
+        status === "error" && "border-destructive/40"
       )}
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -52,16 +50,12 @@ export function GenerationStatus({
           aria-atomic="true"
           className="min-w-0 flex-1 space-y-1"
         >
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={status === "generating" ? "accent" : status === "error" ? "destructive" : "default"}
-            >
-              {status === "generating" && "Generating..."}
-              {status === "done" && "Complete"}
-              {status === "error" && "Error"}
-            </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <strong className={cn("micro-label", status === "error" && "text-destructive")}>
+              {status === "generating" ? "Generating…" : "Error"}
+            </strong>
             {displayProgress && status === "generating" && (
-              <span className="text-xs text-muted-foreground truncate max-w-lg">
+              <span className="min-w-0 flex-1 break-words text-sm text-muted-foreground">
                 {displayProgress}
               </span>
             )}
@@ -70,7 +64,7 @@ export function GenerationStatus({
         </div>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw data-icon="inline-start" />
             Retry
           </Button>
         )}

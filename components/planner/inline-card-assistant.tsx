@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bot, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { Bot, Loader2, MessageCircleQuestion, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -47,8 +47,11 @@ export function InlineCardAssistant({
 }: InlineCardAssistantProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [draft, setDraft] = React.useState("");
-  const panelId = `${sectionId}-assistant-panel`;
-  const statusId = `${sectionId}-assistant-status`;
+  const id = React.useId();
+  const panelId = `${id}-assistant-panel`;
+  const promptId = `${id}-assistant-prompt`;
+  const statusId = `${id}-assistant-status`;
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
   const canSubmit = draft.trim().length > 0 && !state.isLoading;
 
   const submit = () => {
@@ -58,20 +61,27 @@ export function InlineCardAssistant({
   const dismiss = () => {
     onDismiss?.();
     setIsOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const applySuggestion = () => {
+    onApplySuggestion?.();
+    setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   return (
     <div className={cn("min-w-0", className)}>
       <Button
+        ref={triggerRef}
         type="button"
         variant="ghost"
         size="sm"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((open) => !open)}
-        className="h-7 px-2 text-xs"
       >
-        <Sparkles data-icon="inline-start" />
+        <MessageCircleQuestion data-icon="inline-start" />
         Ask AI
       </Button>
 
@@ -80,11 +90,11 @@ export function InlineCardAssistant({
           id={panelId}
           className="blueprint-surface mt-2 flex min-w-0 flex-col gap-2 rounded-lg border border-border/60 p-2.5"
         >
-          <label htmlFor={`${sectionId}-assistant-prompt`} className="micro-label">
+          <label htmlFor={promptId} className="micro-label !text-sm">
             Ask about this section
           </label>
           <Textarea
-            id={`${sectionId}-assistant-prompt`}
+            id={promptId}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
@@ -94,8 +104,10 @@ export function InlineCardAssistant({
               }
             }}
             placeholder="What should be clearer, stronger, or more specific?"
+            name={`${sectionId}AssistantPrompt`}
+            autoComplete="off"
             aria-describedby={statusId}
-            className="min-h-20 bg-background/70 text-xs"
+            className="min-h-20 bg-background/70 text-base"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" onClick={submit} disabled={!canSubmit}>
@@ -106,7 +118,7 @@ export function InlineCardAssistant({
               )}
               {state.isLoading ? "Thinking..." : "Ask AI"}
             </Button>
-            <span className="text-[10px] text-muted-foreground">Ctrl/⌘ + Enter</span>
+            <span className="text-base text-muted-foreground">Ctrl/⌘ + Enter</span>
           </div>
 
           <div id={statusId} className="sr-only" aria-live="polite" aria-atomic="true">
@@ -122,7 +134,7 @@ export function InlineCardAssistant({
           <div>
             {state.error && (
               <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-destructive/30 bg-background/70 p-2.5">
-                <p className="text-xs text-destructive">{state.error}</p>
+                <p className="break-words text-base text-destructive">{state.error}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={submit} disabled={!canSubmit}>
                     <RotateCcw data-icon="inline-start" />
@@ -138,12 +150,12 @@ export function InlineCardAssistant({
 
             {!state.error && state.answer && (
               <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-accent/20 bg-background/70 p-2.5">
-                <p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-foreground">
+                <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
                   {state.answer}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {state.canApply && onApplySuggestion && (
-                    <Button type="button" size="sm" onClick={onApplySuggestion}>
+                    <Button type="button" size="sm" onClick={applySuggestion}>
                       Use suggestion
                     </Button>
                   )}

@@ -1,6 +1,6 @@
 # Project Idea to Plan
 
-An AI-powered tool that transforms abstract app ideas into structured, actionable project plans. Enter your idea, configure an AI provider, answer a few clarifying questions, and get a comprehensive blueprint — all streamed in real time. Every section of the generated brief is fully editable, with visual graphs and one-click export.
+An AI-powered tool that transforms abstract app ideas into structured, actionable project plans. Enter your idea, configure an AI provider, answer a few clarifying questions, and get a full-width Decision Trace across Purpose, People, Product, Architecture, Delivery, and Handoff domains. Every section of the generated brief is fully editable, with accessible visual graphs and one-click export.
 
 ## Features
 
@@ -22,7 +22,7 @@ An AI-powered tool that transforms abstract app ideas into structured, actionabl
 | AI Integration | Vercel AI SDK + `@ai-sdk/openai-compatible` |
 | Graphs | React Flow (`@xyflow/react`) |
 | Drag & Drop | `@dnd-kit/react` |
-| UI Primitives | Radix UI (`@radix-ui/react-slot`, `@radix-ui/react-tabs`) |
+| UI Primitives | Radix UI (`@radix-ui/react-slot`) |
 | Icons | Lucide React |
 | Validation | Zod v4 |
 | Package Manager | npm |
@@ -33,7 +33,7 @@ No database, authentication, or environment variables required. All configuratio
 
 ### Prerequisites
 
-- Node.js v18.17 or later
+- Node.js v20.9 or later
 - npm (bundled with Node.js)
 
 ### Steps
@@ -69,7 +69,7 @@ That's it. No `.env` file is needed — the app accepts all configuration throug
 
 5. Click **Generate**. The AI will first produce a set of clarifying questions — answer them to sharpen the brief, regenerate any you don't like, add your own, or skip straight to generation.
 
-6. Review the generated brief. Every section (app summary, target users, features, tech stack, pages, data model, roadmap, risks) is inline-editable.
+6. Review the generated Decision Trace. Every domain and section (app summary, target users, features, tech stack, pages, data model, roadmap, risks, and handoff artifacts) is inline-editable.
 
 7. Export via the **Copy** or **Download** buttons on the Markdown Brief and Starter Prompt cards. You can also refine the starter prompt by clicking **Update** and providing feedback.
 

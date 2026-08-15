@@ -28,7 +28,7 @@ function subscribeTheme(callback: () => void) {
 }
 
 function getThemeSnapshot() {
-  return localStorage.getItem(THEME_STORAGE_KEY) || themes[0].id;
+  return getThemeById(localStorage.getItem(THEME_STORAGE_KEY) || themes[0].id).id;
 }
 
 function getThemeServerSnapshot() {
@@ -40,7 +40,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = React.useMemo(() => getThemeById(themeId), [themeId]);
 
   const setTheme = React.useCallback((id: string) => {
-    localStorage.setItem(THEME_STORAGE_KEY, id);
+    localStorage.setItem(THEME_STORAGE_KEY, getThemeById(id).id);
     window.dispatchEvent(new Event("theme-changed"));
   }, []);
 
@@ -51,6 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       styleEl.id = "theme-styles";
       document.head.appendChild(styleEl);
     }
+    document.documentElement.dataset.theme = theme.id;
     styleEl.textContent = buildThemeStyleString(theme);
   }, [theme]);
 

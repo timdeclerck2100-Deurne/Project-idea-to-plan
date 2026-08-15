@@ -4,7 +4,7 @@ This document defines the visual design system for Project Idea to Plan. All UI 
 
 ## 1. Design Philosophy
 
-**Blueprint Aesthetic** — The app uses an engineering/blueprint metaphor with a dark, immersive, layered visual language.
+**Decision Trace Blueprint** — The app uses an engineering/blueprint metaphor with a dark, immersive, layered visual language organized as one ordered decision trail rather than a dashboard of equal cards.
 
 Core principles:
 - **Dark-first**: All themes use dark backgrounds (lightness < 0.30 in oklch)
@@ -12,6 +12,7 @@ Core principles:
 - **Functional glassmorphism**: Backdrop blur and transparency serve readability, not decoration
 - **Technical precision**: Grid patterns, monospace labels, and structured layouts reinforce the "planning tool" identity
 - **Thematic flexibility**: 11 built-in themes swap the entire palette at runtime without changing component structure
+- **Readable by default**: Sustained reading/editing text is at least 16px; controls, labels, badges, and metadata are at least 14px
 
 ## 2. Color System
 
@@ -71,7 +72,7 @@ A signature design element used for section eyebrows and category headers:
 ```css
 .micro-label {
   font-family: var(--font-code);
-  font-size: 0.65rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -86,10 +87,10 @@ Usage: Apply the `.micro-label` class to small uppercase labels above section ti
 | Element | Class | Size | Weight | Font |
 |---------|-------|------|--------|------|
 | Card title | `font-display text-xl font-bold` | 1.25rem | 700 | Display |
-| Body text | `text-sm` | 0.875rem | 400 | Body |
+| Body text | `text-base` | 1rem | 400 | Body |
 | Button text | `text-sm font-semibold` | 0.875rem | 600 | Body |
-| Badge text | `text-xs font-semibold font-mono uppercase tracking-widest` | 0.75rem | 600 | Mono |
-| Micro-label | `.micro-label` | 0.65rem | 600 | Mono |
+| Badge text | `text-sm font-semibold font-mono uppercase tracking-widest` | 0.875rem | 600 | Mono |
+| Micro-label | `.micro-label` | 0.875rem | 600 | Mono |
 
 ## 4. Surface System
 
@@ -140,7 +141,7 @@ All base components follow shadcn/ui patterns: CVA for variants, `cn()` for clas
 
 | Variant | Style | Usage |
 |---------|-------|-------|
-| `default` | Command strip gradient (amber → teal → purple), white text | Primary actions (Generate, Export) |
+| `default` | Command strip gradient with `--ut-cmd-text` | Primary actions (Generate, Export) |
 | `destructive` | `bg-destructive` | Delete, cancel, error actions |
 | `outline` | Glass-like: `bg-card/30 backdrop-blur-sm border` | Secondary actions, toggles |
 | `secondary` | `bg-secondary` | Tertiary actions |
@@ -149,10 +150,10 @@ All base components follow shadcn/ui patterns: CVA for variants, `cn()` for clas
 
 | Size | Dimensions | Usage |
 |------|-----------|-------|
-| `default` | h-10, px-5 | Standard buttons |
-| `sm` | h-8, px-3, rounded-lg | Compact/inline buttons |
+| `default` | h-11, px-5 | Standard buttons |
+| `sm` | h-10, px-3, rounded-lg | Inline buttons |
 | `lg` | h-12, px-8 | Hero/CTA buttons |
-| `icon` | h-10, w-10 | Icon-only buttons |
+| `icon` | 44px square | Icon-only buttons |
 
 All buttons: `rounded-xl`, `font-semibold`, `hover:-translate-y-0.5 active:translate-y-0`
 
@@ -173,9 +174,9 @@ Anatomy: `Card` → `CardHeader` → `CardTitle` / `CardDescription` → `CardCo
 | `secondary` | `bg-secondary text-secondary-foreground` | Inactive items |
 | `destructive` | `bg-destructive text-destructive-foreground` | Error states |
 | `outline` | `border-border text-foreground` | Neutral tags |
-| `accent` | `bg-accent/20 text-accent` | Accent highlights |
+| `accent` | `bg-accent text-accent-foreground` | Accent highlights |
 
-All badges: `rounded-full font-mono uppercase tracking-widest text-xs`
+All badges: `rounded-full font-mono uppercase tracking-widest text-sm`
 
 #### Input / Textarea
 
@@ -184,12 +185,6 @@ rounded-xl border border-border bg-background/30 backdrop-blur-sm
 ```
 
 With shadow inset for depth. Textarea adds `resize-none` by default.
-
-#### Tabs
-
-- Tab list: `rounded-xl bg-muted/50`
-- Tab triggers: `rounded-lg uppercase font-mono tracking-wider`
-- Active: `data-[state=active]:bg-card`
 
 ## 6. Interaction Patterns
 
@@ -230,6 +225,8 @@ The app uses **CSS-only animations** — no Framer Motion.
 ```
 
 Both use `animation-fill-mode: both` (start hidden, end visible).
+
+Under `prefers-reduced-motion: reduce`, nonessential fade, scale, spin, pulse, hover lift, and graph transition motion is disabled while preserving immediate static state feedback.
 
 ### Drag States
 
@@ -276,25 +273,26 @@ Selected theme ID is stored in `localStorage` under key `planner-theme`.
 ### Page Structure
 
 ```
-PlannerShell (.planner-bg, full screen, flex column, overflow-hidden)
-├── Top bar / settings
-├── IdeaInput (flex-1 textarea)
-├── ClarifyingQuestions (conditional)
-├── BriefWorkspace (scrollable content area)
-│   ├── Responsive grid (1/2/4 columns)
-│   │   └── BriefSectionCard × N
-│   ├── DataModelFlow (React Flow graph)
-│   ├── PlannerProcessFlow (React Flow graph)
-│   ├── MarkdownExportCard
-│   └── StarterPromptCard
-└── Footer / status
+PlannerShell (.planner-bg, full-width document flow)
+├── Skip link
+├── Main landmark
+│   ├── Command bench (idea, provider, theme, generation trace)
+│   ├── ClarifyingQuestions (conditional)
+│   └── BriefWorkspace (Decision Trace)
+│       ├── Purpose
+│       ├── People
+│       ├── Product
+│       ├── Architecture (DataModelFlow + textual outline)
+│       ├── Delivery (Roadmap + PlannerProcessFlow + textual outline)
+│       └── Handoff (MarkdownExportCard + StarterPromptCard)
+└── Live status regions
 ```
 
 ### Spacing Patterns
 
 | Context | Padding | Gap |
 |---------|---------|-----|
-| Card internal | `p-3` or `p-5` | `gap-2` / `gap-3` |
+| Card internal | `p-4` or `p-5` | `gap-3` / `gap-4` |
 | Card header | `p-5` | `space-y-1.5` |
 | Card content | `p-5 pt-0` | — |
 | Grid layouts | — | `gap-3` / `gap-4` |
@@ -302,16 +300,16 @@ PlannerShell (.planner-bg, full screen, flex column, overflow-hidden)
 
 ### Responsive Grid
 
-BriefWorkspace uses responsive CSS grid:
-- Mobile: 1 column
-- Tablet: 2 columns
-- Desktop: 4 columns (for section cards)
+BriefWorkspace uses full-width semantic domain bands:
+- Mobile: one linear decision trace
+- Tablet: wrapped controls with readable single-column sections
+- Desktop: domain bands can distribute editors, graphs, and handoff artifacts across the available width
 
 ### Overflow
 
-- `PlannerShell`: `overflow-hidden` (prevents body scroll)
-- `BriefWorkspace`: `overflow-y-auto` (scrollable content)
-- `ScrollArea` component: `overflow-auto` wrapper
+- `PlannerShell`: full-width `100dvh` minimum with safe-area padding; the document owns vertical scrolling
+- `BriefWorkspace`: normal document flow with no application-level centered `max-width`
+- Graph and roadmap containers clip their own technical canvases while preserving textual alternatives and reachable controls
 
 ## 10. Design Tokens Reference
 
@@ -385,6 +383,7 @@ BriefWorkspace uses responsive CSS grid:
 - Use `.glass-panel` for elevated overlays and settings
 - Use CVA for component variants
 - Use `forwardRef` for all base components
+- Keep generated/editable text at 16px or larger and controls/metadata at 14px or larger
 
 ### Don't
 
@@ -392,6 +391,6 @@ BriefWorkspace uses responsive CSS grid:
 - Don't use Framer Motion — use CSS animations only
 - Don't add comments to component code unless requested
 - Don't use `.glass-panel` for simple content cards (use `.paper-card` instead)
-- Don't use `rounded-lg` for buttons (use `rounded-xl`)
+- Don't use compact typography exceptions below the documented floors
 - Don't skip the `cn()` utility — never concatenate class strings
 - Don't add new font families without updating all themes in `lib/themes.ts`

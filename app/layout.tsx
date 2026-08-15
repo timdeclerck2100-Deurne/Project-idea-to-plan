@@ -38,8 +38,11 @@ const themeInitScript = `
 (() => {
   try {
     const styles = ${JSON.stringify(themeStylesById)};
-    const themeId = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)}) || ${JSON.stringify(themes[0].id)};
-    const cssText = styles[themeId] || styles[${JSON.stringify(themes[0].id)}];
+    const defaultThemeId = ${JSON.stringify(themes[0].id)};
+    const storedThemeId = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)}) || defaultThemeId;
+    const themeId = Object.prototype.hasOwnProperty.call(styles, storedThemeId) ? storedThemeId : defaultThemeId;
+    const cssText = styles[themeId];
+    document.documentElement.dataset.theme = themeId;
     let styleEl = document.getElementById("theme-styles");
     if (!styleEl) {
       styleEl = document.createElement("style");
@@ -59,6 +62,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme={themes[0].id}
       suppressHydrationWarning
       className={`${ibmPlexSans.variable} ${fraunces.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >

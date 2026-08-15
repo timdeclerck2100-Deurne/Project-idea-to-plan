@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight, Loader2, RefreshCw, Plus } from "lucide-react";
+import { Badge, badgeVariants } from "@/components/ui/badge";
+import { ArrowRight, Loader2, RefreshCw, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface QuestionOption {
   label: string;
@@ -37,20 +37,24 @@ export function ClarifyingQuestions({
   regeneratingIndex = null,
   isAddingQuestion = false,
 }: ClarifyingQuestionsProps) {
-  const [answers, setAnswers] = React.useState<Record<string, string>>({});
+  const [answers, setAnswers] = React.useState<Record<number, number>>({});
+  const questionGroupId = React.useId();
 
-  const allAnswered = questions.length > 0 && questions.every((q) => answers[q.question]);
+  const answeredCount = questions.reduce(
+    (count, question, index) => count + (question.options[answers[index]] ? 1 : 0),
+    0
+  );
+  const allAnswered = questions.length > 0 && answeredCount === questions.length;
 
-  const handleSelect = (question: string, label: string) => {
-    setAnswers((prev) => ({ ...prev, [question]: label }));
+  const handleSelect = (questionIndex: number, optionIndex: number) => {
+    setAnswers((prev) => ({ ...prev, [questionIndex]: optionIndex }));
   };
 
   const handleRegenerate = (index: number) => {
     if (onRegenerate && regeneratingIndex === null) {
-      const questionText = questions[index].question;
       setAnswers((prev) => {
         const next = { ...prev };
-        delete next[questionText];
+        delete next[index];
         return next;
       });
       onRegenerate(index);
@@ -59,104 +63,121 @@ export function ClarifyingQuestions({
 
   const handleConfirm = () => {
     if (allAnswered) {
-      onConfirm(answers);
+      const serializedAnswers = questions.reduce<Record<string, string>>(
+        (result, question, index) => {
+          result[question.question] = question.options[answers[index]].label;
+          return result;
+        },
+        {}
+      );
+      onConfirm(serializedAnswers);
     }
   };
 
   return (
-    <div className="space-y-3 animate-fade-up">
-      <div className="flex items-center justify-between">
+    <div className="flex animate-fade-up flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="micro-label">Refine</div>
-          <h2 className="text-sm font-medium text-foreground">
+          <h2 className="text-base font-medium text-foreground">
             A few questions to sharpen your brief
           </h2>
         </div>
-        <Badge variant="outline" className="text-[10px]">
-          {Object.keys(answers).length} / {questions.length} answered
+        <Badge variant="outline" className="text-sm">
+          {answeredCount} / {questions.length} answered
         </Badge>
       </div>
 
-      <div className="space-y-2">
+      <div className="border-y border-border">
         {questions.map((q, index) => {
           const isRegenerating = regeneratingIndex === index;
           return (
-            <Card key={index} className="paper-card rounded-xl p-3">
-              <div className="flex items-start gap-3">
-                <Badge variant="accent" className="mt-0.5 shrink-0 text-[10px]">
-                  {index + 1}
-                </Badge>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground mb-2">
-                      {isRegenerating ? (
-                        <span className="text-muted-foreground animate-pulse">Generating new question...</span>
-                      ) : (
-                        q.question
-                      )}
-                    </p>
-                    {onRegenerate && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 shrink-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleRegenerate(index)}
-                        disabled={isRegenerating || regeneratingIndex !== null}
-                        title="Generate new question"
-                      >
-                        {isRegenerating ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3 w-3" />
-                        )}
-                      </Button>
+            <div key={index} className="border-b border-border py-4 last:border-b-0">
+              <fieldset className="relative min-w-0">
+                <legend className="w-full pr-12 text-base font-medium text-foreground">
+                  <span className="flex items-start gap-3">
+                    <span className={cn(badgeVariants({ variant: "accent" }), "mt-0.5 shrink-0 text-sm")}>
+                      {index + 1}
+                    </span>
+                    {isRegenerating ? (
+                      <span className="animate-pulse text-muted-foreground">Generating new question…</span>
+                    ) : (
+                      q.question
                     )}
+                  </span>
+                </legend>
+                {onRegenerate && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleRegenerate(index)}
+                    disabled={isRegenerating || regeneratingIndex !== null}
+                    aria-label={`Generate a new question for question ${index + 1}`}
+                    title="Generate new question"
+                  >
+                    {isRegenerating ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <RefreshCw />
+                    )}
+                  </Button>
+                )}
+                {!isRegenerating && (
+                  <div className="mt-3 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                    {q.options.map((option, optionIndex) => {
+                      const isSelected = answers[index] === optionIndex;
+                      const optionId = `${questionGroupId}-${index}-${optionIndex}`;
+                      const descriptionId = `${optionId}-description`;
+                      return (
+                        <label
+                          key={optionIndex}
+                          htmlFor={optionId}
+                          className={cn(
+                            "flex cursor-pointer items-start gap-3 border-l-2 border-border bg-muted/20 px-3 py-2 text-foreground transition-colors hover:bg-muted/35",
+                            "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2",
+                            isSelected && "border-accent bg-accent/10 font-medium"
+                          )}
+                        >
+                          <input
+                            id={optionId}
+                            type="radio"
+                            name={`${questionGroupId}-${index}`}
+                            value={option.label}
+                            checked={isSelected}
+                            onChange={() => handleSelect(index, optionIndex)}
+                            aria-describedby={descriptionId}
+                            className="mt-1 size-4 shrink-0 accent-accent focus-visible:outline-none"
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-base">{option.label}</span>
+                            <span
+                              id={descriptionId}
+                              className="mt-1 block text-base font-normal leading-relaxed text-muted-foreground"
+                            >
+                              {option.description}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
-                  {!isRegenerating && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {q.options.map((option) => {
-                        const isSelected = answers[q.question] === option.label;
-                        return (
-                          <button
-                            key={option.label}
-                            onClick={() => handleSelect(q.question, option.label)}
-                            className={`
-                              inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs
-                              border transition-all cursor-pointer
-                              ${
-                                isSelected
-                                  ? "bg-accent/15 border-accent/40 text-accent"
-                                  : "bg-secondary/50 border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
-                              }
-                            `}
-                          >
-                            {isSelected && <Check className="h-3 w-3" />}
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {!isRegenerating && answers[q.question] && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {q.options.find((o) => o.label === answers[q.question])?.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
+                )}
+              </fieldset>
+            </div>
           );
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={onSkip}
             disabled={isLoading || regeneratingIndex !== null || isAddingQuestion}
-            className="text-xs text-muted-foreground"
+            className="text-muted-foreground"
           >
             Skip questions
           </Button>
@@ -166,12 +187,12 @@ export function ClarifyingQuestions({
               size="sm"
               onClick={onAddQuestion}
               disabled={isLoading || regeneratingIndex !== null || isAddingQuestion}
-              className="text-xs text-muted-foreground"
+              className="text-muted-foreground"
             >
               {isAddingQuestion ? (
-                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                <Loader2 data-icon="inline-start" className="animate-spin" />
               ) : (
-                <Plus className="h-3 w-3 mr-1" />
+                <Plus data-icon="inline-start" />
               )}
               Add question
             </Button>
@@ -181,14 +202,13 @@ export function ClarifyingQuestions({
           size="sm"
           onClick={handleConfirm}
           disabled={!allAnswered || isLoading || regeneratingIndex !== null || isAddingQuestion}
-          className="text-xs"
         >
           {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loader2 data-icon="inline-start" className="animate-spin" />
           ) : (
-            <ArrowRight className="h-3 w-3" />
+            <ArrowRight data-icon="inline-start" />
           )}
-          {isLoading ? "Generating..." : "Generate brief"}
+          {isLoading ? "Generating…" : "Generate brief"}
         </Button>
       </div>
     </div>

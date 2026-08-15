@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { BadgePlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export interface AppNameEditorProps {
   name: string;
@@ -15,6 +16,8 @@ export interface AppNameEditorProps {
   generatedSuggestion?: string | null;
   onUseGeneratedName: (name: string) => void;
   onDismissGeneratedName: () => void;
+  embedded?: boolean;
+  className?: string;
 }
 
 export function AppNameEditor({
@@ -26,10 +29,27 @@ export function AppNameEditor({
   generatedSuggestion,
   onUseGeneratedName,
   onDismissGeneratedName,
+  embedded = false,
+  className,
 }: AppNameEditorProps) {
   const [edit, setEdit] = React.useState({ base: name, draft: name });
   const draft = edit.base === name ? edit.draft : name;
-  const errorId = "planner-app-name-error";
+  const id = React.useId();
+  const inputId = `${id}-app-name`;
+  const errorId = `${id}-error`;
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const generateButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  const useGeneratedName = () => {
+    if (!generatedSuggestion) return;
+    onUseGeneratedName(generatedSuggestion);
+    inputRef.current?.focus();
+  };
+
+  const dismissGeneratedName = () => {
+    onDismissGeneratedName();
+    generateButtonRef.current?.focus();
+  };
 
   const commit = () => {
     const nextName = draft.trim();
@@ -42,14 +62,29 @@ export function AppNameEditor({
   };
 
   return (
-    <div className="paper-card flex min-w-0 flex-col gap-2 rounded-xl p-3">
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-3",
+        embedded ? "py-2" : "paper-card rounded-xl p-3",
+        className,
+      )}
+    >
+      <div className="flex max-w-4xl min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <Label htmlFor="planner-app-name" className="micro-label">
-            App name
-          </Label>
+          {embedded ? (
+            <h3 className="leading-none">
+              <Label htmlFor={inputId} className="micro-label !text-sm">
+                App name
+              </Label>
+            </h3>
+          ) : (
+            <Label htmlFor={inputId} className="micro-label !text-sm">
+              App name
+            </Label>
+          )}
           <Input
-            id="planner-app-name"
+            ref={inputRef}
+            id={inputId}
             value={draft}
             onChange={(event) => setEdit({ base: name, draft: event.target.value })}
             onBlur={commit}
@@ -60,12 +95,18 @@ export function AppNameEditor({
               }
             }}
             placeholder="App name"
+            name="appName"
+            autoComplete="off"
             aria-invalid={generationError ? true : undefined}
             aria-describedby={generationError ? errorId : undefined}
-            className="h-auto min-w-0 border-none bg-transparent py-0 font-display text-xl font-bold tracking-tight shadow-none"
+            className={cn(
+              "h-auto min-w-0 border-none bg-transparent py-0 font-display font-bold tracking-tight shadow-none",
+              embedded ? "text-3xl sm:text-4xl" : "text-xl",
+            )}
           />
         </div>
         <Button
+          ref={generateButtonRef}
           type="button"
           variant="outline"
           size="sm"
@@ -76,7 +117,7 @@ export function AppNameEditor({
           {isGeneratingName ? (
             <Loader2 data-icon="inline-start" className="animate-spin" />
           ) : (
-            <Sparkles data-icon="inline-start" />
+            <BadgePlus data-icon="inline-start" />
           )}
           {isGeneratingName ? "Generating..." : "Generate name"}
         </Button>
@@ -84,18 +125,18 @@ export function AppNameEditor({
 
       <div aria-live="polite" aria-atomic="true">
         {generationError && (
-          <p id={errorId} className="text-xs text-destructive">
+          <p id={errorId} className="break-words text-base text-destructive">
             {generationError}
           </p>
         )}
         {generatedSuggestion && (
           <div className="blueprint-surface flex min-w-0 flex-col gap-2 rounded-lg border border-accent/20 p-2.5 sm:flex-row sm:items-center">
-            <p className="min-w-0 flex-1 break-words text-sm font-medium">{generatedSuggestion}</p>
+            <p className="min-w-0 flex-1 break-words text-base font-medium">{generatedSuggestion}</p>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" onClick={() => onUseGeneratedName(generatedSuggestion)}>
+              <Button type="button" size="sm" onClick={useGeneratedName}>
                 Use name
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={onDismissGeneratedName}>
+              <Button type="button" variant="ghost" size="sm" onClick={dismissGeneratedName}>
                 Dismiss
               </Button>
             </div>

@@ -11,6 +11,7 @@ export interface BriefSectionCardProps {
   actions?: React.ReactNode;
   assistant?: React.ReactNode;
   className?: string;
+  embedded?: boolean;
 }
 
 export function BriefSectionCard({
@@ -20,13 +21,21 @@ export function BriefSectionCard({
   actions,
   assistant,
   className,
+  embedded = false,
 }: BriefSectionCardProps) {
   return (
-    <Card className={cn("paper-card min-w-0 rounded-xl p-3 animate-fade-up", className)}>
+    <Card
+      variant={embedded ? "plain" : "paper"}
+      className={cn(
+        "min-w-0 animate-fade-up",
+        embedded ? "rounded-none border-t border-border pt-4" : "rounded-xl p-3",
+        className,
+      )}
+    >
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-2">
-          {eyebrow && <div className="micro-label">{eyebrow}</div>}
-          <h3 className="text-sm font-medium text-foreground leading-none">{title}</h3>
+          {eyebrow && <div className="micro-label !text-sm">{eyebrow}</div>}
+          <h3 className="text-base font-medium text-foreground leading-tight text-pretty">{title}</h3>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-1">{actions}</div>}
       </div>
