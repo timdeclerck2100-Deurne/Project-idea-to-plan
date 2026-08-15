@@ -40,7 +40,7 @@ No database, authentication, or environment variables required. All configuratio
 
 1. Clone the repository:
    ```bash
-   git clone [<repository-url>](https://github.com/timdeclerck2100-Deurne/Project-idea-to-plan)
+   git clone https://github.com/timdeclerck2100-Deurne/Project-idea-to-plan
    cd Project-idea-to-plan
    ```
 
