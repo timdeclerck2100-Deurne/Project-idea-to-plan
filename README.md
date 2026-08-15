@@ -1,6 +1,10 @@
 # Project Idea to Plan
 
 An AI-powered tool that transforms abstract app ideas into structured, actionable project plans. Enter your idea, configure an AI provider, answer a few clarifying questions, and get a full-width Decision Trace across Purpose, People, Product, Architecture, Delivery, and Handoff domains. Every section of the generated brief is fully editable, with accessible visual graphs and one-click export.
+The application is 100% created by AI with Opencode as AI agent. Model usage is ChatGPT 5.5 and Opencode big pickle for the code and Chat GPT 5.6 for the final UI.
+
+Inspired by the application created in this Youtube: https://youtu.be/uZGDO0L-Dr4?si=VK214o3bgol-9e6A 
+Discover more of the creator on https://www.youtube.com/@leonvanzyl and https://github.com/leonvanzyl
 
 ## Features
 
@@ -94,6 +98,10 @@ Up to you to decide.
 The app will be available at [http://localhost:3000](http://localhost:3000).
 
 > **Note:** In production, the app enforces HTTPS for AI provider URLs and blocks private/internal endpoints (localhost, `127.x`, `10.x`, `192.168.x`, etc.). Ensure your provider's API endpoint uses HTTPS and is publicly accessible from your server. This restriction is lifted in development mode.
+
+## Warranty 
+
+The app is provided as is. Issues can be reported but no guarantee they will be fixed. Feature requests will be analyzed and implemented if I feel them to be useful. 
 
 ## License
 
