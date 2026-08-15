@@ -1,4 +1,7 @@
+@layer theme, base, vendor, components, utilities;
+
 @import "tailwindcss";
+@import "@xyflow/react/dist/style.css" layer(vendor);
 
 @theme inline {
   --color-background: var(--background);
@@ -33,195 +36,397 @@
   --radius-full: 9999px;
 }
 
-:root {
-  --background: oklch(0.94 0.032 86);
-  --foreground: oklch(0.19 0.029 252);
-  --card: oklch(0.985 0.026 92 / 84%);
-  --card-foreground: oklch(0.19 0.029 252);
-  --primary: oklch(0.68 0.165 55);
-  --primary-foreground: oklch(0.98 0.02 88);
-  --secondary: oklch(0.86 0.055 184 / 80%);
-  --secondary-foreground: oklch(0.19 0.029 252);
-  --muted: oklch(0.88 0.03 84 / 68%);
-  --muted-foreground: oklch(0.42 0.036 252);
-  --accent: oklch(0.78 0.122 174);
-  --accent-foreground: oklch(0.19 0.029 252);
-  --destructive: oklch(0.58 0.21 31);
-  --destructive-foreground: oklch(0.98 0.02 88);
-  --border: oklch(0.24 0.035 252 / 18%);
-  --ring: oklch(0.76 0.14 174);
-  --input: oklch(0.24 0.035 252 / 18%);
-  --chart-1: oklch(0.68 0.165 55);
-  --chart-2: oklch(0.78 0.122 174);
-  --chart-3: oklch(0.65 0.18 290);
-  --chart-4: oklch(0.72 0.16 25);
-  --chart-5: oklch(0.65 0.15 145);
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-display-family: "Fraunces", serif;
-  --font-code: "IBM Plex Mono", monospace;
+@layer theme {
+  :root {
+    --background: oklch(0.17 0.055 252);
+    --foreground: oklch(0.95 0.04 88);
+    --card: oklch(0.22 0.06 252 / 80%);
+    --card-foreground: oklch(0.95 0.04 88);
+    --primary: oklch(0.80 0.19 61);
+    --primary-foreground: oklch(0.17 0.055 252);
+    --secondary: oklch(0.28 0.08 244 / 78%);
+    --secondary-foreground: oklch(0.95 0.04 88);
+    --muted: oklch(0.28 0.07 252 / 68%);
+    --muted-foreground: oklch(0.75 0.055 88);
+    --accent: oklch(0.79 0.16 178);
+    --accent-foreground: oklch(0.17 0.055 252);
+    --destructive: oklch(0.70 0.23 31);
+    --destructive-foreground: oklch(0.98 0.02 88);
+    --border: oklch(0.98 0.02 88 / 18%);
+    --ring: oklch(0.82 0.17 178);
+    --input: oklch(0.98 0.02 88 / 18%);
+    --chart-1: oklch(0.80 0.19 61);
+    --chart-2: oklch(0.79 0.16 178);
+    --chart-3: oklch(0.74 0.21 290);
+    --chart-4: oklch(0.80 0.19 25);
+    --chart-5: oklch(0.74 0.18 145);
+    --font-body: var(--font-ibm-plex-sans), system-ui, sans-serif;
+    --font-display-family: var(--font-fraunces), Georgia, serif;
+    --font-code: var(--font-ibm-plex-mono), ui-monospace, monospace;
+    --type-reading: 1rem;
+    --type-control: 0.875rem;
+    --leading-reading: 1.6;
+    --leading-control: 1.4;
+    --gutter-canvas: clamp(1rem, 3vw, 3rem);
+    --measure-readable: 70ch;
+    --radius-control: var(--radius-md);
+    --radius-card: var(--radius-xl);
+    --focus-width: 2px;
+    --focus-offset: 2px;
+    --motion-feedback: 150ms;
+    --motion-context: 250ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ut-planner-gradient: oklch(0.17 0.055 252 / 70%);
+    --ut-planner-grid: oklch(0.79 0.16 178 / 12%);
+    --ut-planner-radial1: oklch(0.80 0.19 61 / 20%);
+    --ut-planner-radial2: oklch(0.79 0.16 178 / 16%);
+    --ut-glass-bg: oklch(0.22 0.06 252 / 72%);
+    --ut-glass-border: oklch(0.98 0.02 88 / 22%);
+    --ut-glass-shadow: oklch(0.10 0.03 252 / 50%);
+    --ut-glass-inset: oklch(0.98 0.02 88 / 12%);
+    --ut-paper-bg: oklch(0.22 0.06 252 / 62%);
+    --ut-paper-border: oklch(0.98 0.02 88 / 20%);
+    --ut-paper-shadow: oklch(0.10 0.03 252 / 35%);
+    --ut-paper-inset: oklch(0.98 0.02 88 / 10%);
+    --ut-bp-grid: oklch(0.79 0.16 178 / 14%);
+    --ut-bp-bg: oklch(0.17 0.055 252 / 85%);
+    --ut-bp-border: oklch(0.79 0.16 178 / 20%);
+    --ut-cmd-from: oklch(0.70 0.19 55);
+    --ut-cmd-via: oklch(0.80 0.14 174);
+    --ut-cmd-to: oklch(0.67 0.20 290);
+    --ut-cmd-text: oklch(0.98 0.02 88);
+    --ut-micro-color: oklch(0.75 0.055 88);
+  }
 }
 
-.dark {
-  --background: oklch(0.15 0.038 252);
-  --foreground: oklch(0.94 0.034 88);
-  --card: oklch(0.205 0.044 252 / 78%);
-  --card-foreground: oklch(0.94 0.034 88);
-  --primary: oklch(0.78 0.16 61);
-  --primary-foreground: oklch(0.15 0.038 252);
-  --secondary: oklch(0.25 0.06 244 / 74%);
-  --secondary-foreground: oklch(0.94 0.034 88);
-  --muted: oklch(0.26 0.052 252 / 64%);
-  --muted-foreground: oklch(0.73 0.042 88);
-  --accent: oklch(0.77 0.134 178);
-  --accent-foreground: oklch(0.15 0.038 252);
-  --destructive: oklch(0.68 0.21 31);
-  --destructive-foreground: oklch(0.98 0.02 88);
-  --border: oklch(0.98 0.02 88 / 14%);
-  --ring: oklch(0.8 0.15 178);
-  --input: oklch(0.98 0.02 88 / 14%);
-  --chart-1: oklch(0.78 0.16 61);
-  --chart-2: oklch(0.77 0.134 178);
-  --chart-3: oklch(0.72 0.19 290);
-  --chart-4: oklch(0.78 0.17 25);
-  --chart-5: oklch(0.72 0.16 145);
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+
+  @media (forced-colors: active) {
+    * {
+      border-color: CanvasText;
+    }
+
+    body {
+      background: Canvas;
+      color: CanvasText;
+    }
+  }
 }
 
-* {
-  border-color: var(--border);
-}
+@layer components {
+  .planner-bg {
+    position: relative;
+    background:
+      linear-gradient(
+        var(--ut-planner-gradient),
+        var(--background)
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 39px,
+        var(--ut-planner-grid) 39px,
+        var(--ut-planner-grid) 40px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 39px,
+        var(--ut-planner-grid) 39px,
+        var(--ut-planner-grid) 40px
+      );
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body);
-}
-
-.planner-bg {
-  position: relative;
-  background:
-    linear-gradient(
-      oklch(0.15 0.038 252 / 60%),
-      oklch(0.15 0.038 252 / 95%)
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 39px,
-      oklch(0.77 0.134 178 / 4%) 39px,
-      oklch(0.77 0.134 178 / 4%) 40px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 39px,
-      oklch(0.77 0.134 178 / 4%) 39px,
-      oklch(0.77 0.134 178 / 4%) 40px
+  .planner-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 600px 400px at 15% 20%,
+      var(--ut-planner-radial1),
+      transparent
     );
-}
-
-.planner-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 600px 400px at 15% 20%,
-    oklch(0.78 0.16 61 / 8%),
-    transparent
-  );
-  pointer-events: none;
-}
-
-.planner-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 500px 500px at 85% 70%,
-    oklch(0.77 0.134 178 / 6%),
-    transparent
-  );
-  pointer-events: none;
-}
-
-.glass-panel {
-  background: oklch(0.205 0.044 252 / 65%);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid oklch(0.98 0.02 88 / 10%);
-  box-shadow:
-    inset 0 1px 0 oklch(0.98 0.02 88 / 8%),
-    0 8px 32px oklch(0.1 0.02 252 / 40%);
-}
-
-.paper-card {
-  background: oklch(0.205 0.044 252 / 55%);
-  backdrop-filter: blur(8px) saturate(1.2);
-  border: 1px solid oklch(0.98 0.02 88 / 10%);
-  box-shadow:
-    inset 0 1px 0 oklch(0.98 0.02 88 / 6%),
-    0 4px 16px oklch(0.1 0.02 252 / 25%);
-}
-
-.blueprint-surface {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 23px,
-      oklch(0.77 0.134 178 / 6%) 23px,
-      oklch(0.77 0.134 178 / 6%) 24px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 23px,
-      oklch(0.77 0.134 178 / 6%) 23px,
-      oklch(0.77 0.134 178 / 6%) 24px
-    ),
-    oklch(0.15 0.038 252 / 80%);
-  border: 1px solid oklch(0.77 0.134 178 / 10%);
-}
-
-.command-strip {
-  background: linear-gradient(135deg, oklch(0.68 0.165 55), oklch(0.78 0.122 174) 50%, oklch(0.65 0.18 290));
-  color: oklch(0.98 0.02 88);
-  font-weight: 700;
-}
-
-.micro-label {
-  font-family: var(--font-code);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: oklch(0.73 0.042 88);
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+    pointer-events: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .planner-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 500px 500px at 85% 70%,
+      var(--ut-planner-radial2),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .glass-panel {
+    background: var(--ut-glass-bg);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid var(--ut-glass-border);
+    box-shadow:
+      inset 0 1px 0 var(--ut-glass-inset),
+      0 8px 32px var(--ut-glass-shadow);
+  }
+
+  .paper-card {
+    background: var(--ut-paper-bg);
+    backdrop-filter: blur(8px) saturate(1.2);
+    border: 1px solid var(--ut-paper-border);
+    box-shadow:
+      inset 0 1px 0 var(--ut-paper-inset),
+      0 4px 16px var(--ut-paper-shadow);
+  }
+
+  .blueprint-surface {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 23px,
+        var(--ut-bp-grid) 23px,
+        var(--ut-bp-grid) 24px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 23px,
+        var(--ut-bp-grid) 23px,
+        var(--ut-bp-grid) 24px
+      ),
+      var(--ut-bp-bg);
+    border: 1px solid var(--ut-bp-border);
+  }
+
+  .planner-flow {
+    --xy-background-color: var(--ut-bp-bg);
+    --xy-background-pattern-dots-color: var(--ut-bp-grid);
+    --xy-background-pattern-lines-color: var(--ut-bp-grid);
+    --xy-background-pattern-cross-color: var(--ut-bp-grid);
+    --xy-attribution-background-color: var(--card);
+    --xy-minimap-background-color: var(--background);
+    --xy-minimap-mask-background-color: var(--muted);
+    --xy-minimap-mask-stroke-color: var(--border);
+    --xy-minimap-node-background-color: var(--card);
+    --xy-minimap-node-stroke-color: var(--border);
+    --xy-node-color: var(--foreground);
+    --xy-node-border: 1px solid var(--border);
+    --xy-node-background-color: var(--card);
+    --xy-node-group-background-color: var(--muted);
+    --xy-node-boxshadow-hover: 0 0 0 var(--focus-width) var(--ring);
+    --xy-node-boxshadow-selected: 0 0 0 var(--focus-width) var(--ring);
+    --xy-node-border-radius: var(--radius-xl);
+    --xy-handle-background-color: var(--accent);
+    --xy-handle-border-color: var(--background);
+    --xy-edge-stroke: var(--accent);
+    --xy-edge-stroke-width: 2;
+    --xy-edge-stroke-selected: var(--ring);
+    --xy-connectionline-stroke: var(--primary);
+    --xy-connectionline-stroke-width: 2;
+    --xy-edge-label-background-color: var(--background);
+    --xy-edge-label-color: var(--foreground);
+    --xy-controls-button-background-color: var(--card);
+    --xy-controls-button-background-color-hover: var(--muted);
+    --xy-controls-button-color: var(--foreground);
+    --xy-controls-button-color-hover: var(--accent);
+    --xy-controls-button-border-color: var(--border);
+    --xy-controls-box-shadow: 0 0 0 1px var(--border);
+    --xy-selection-background-color: color-mix(in oklch, var(--accent) 16%, transparent);
+    --xy-selection-border: 1px dotted var(--ring);
+    --xy-resize-background-color: var(--accent);
+    color: var(--foreground);
+  }
+
+  .planner-flow .react-flow__node {
+    width: auto;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--foreground);
+    font-size: var(--type-control);
+  }
+
+  .planner-flow .react-flow__node:focus-visible,
+  .planner-flow .react-flow__controls-button:focus-visible,
+  .planner-flow .react-flow__attribution a:focus-visible {
+    outline: var(--focus-width) solid var(--ring);
+    outline-offset: var(--focus-offset);
+  }
+
+  .planner-flow .react-flow__attribution {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md) 0 0 0;
+    background: var(--card);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: max(var(--type-control), 14px);
+    line-height: var(--leading-control);
+    padding: 0;
+  }
+
+  .planner-flow .react-flow__attribution a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.2em;
+  }
+
+  .planner-flow .react-flow__attribution a:hover {
+    background: var(--muted);
+    color: var(--accent);
+  }
+
+  .planner-flow .react-flow__edge-text {
+    fill: var(--xy-edge-label-color);
+    font-family: var(--font-code);
+    font-size: var(--type-control);
+  }
+
+  .planner-flow .react-flow__edge-textbg {
+    fill: var(--xy-edge-label-background-color);
+  }
+
+  .planner-flow .react-flow__controls {
+    max-width: calc(100% - 1rem);
+  }
+
+  .planner-flow .react-flow__controls-button {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-color: var(--xy-controls-button-border-color);
+  }
+
+  .planner-flow .react-flow__controls-button svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
+
+  .planner-flow-node .react-flow__handle {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .planner-flow-outline summary,
+  .planner-flow-outline li {
+    overflow-wrap: anywhere;
+  }
+
+  .planner-flow-outline summary {
+    font-size: max(1rem, 16px);
+  }
+
+  .planner-flow-outline li {
+    font-size: max(0.875rem, 14px);
+  }
+
+  .command-strip {
+    background: linear-gradient(135deg, var(--ut-cmd-from), var(--ut-cmd-via) 50%, var(--ut-cmd-to));
+    color: var(--ut-cmd-text);
+    font-weight: 700;
+  }
+
+  .micro-label {
+    font-family: var(--font-code);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ut-micro-color);
+  }
+
+  /* Roadmap drag-and-drop styles */
+  .roadmap-drop-active {
+    background: color-mix(in oklch, var(--accent) 8%, transparent);
+    border: 1px dashed color-mix(in oklch, var(--accent) 40%, transparent);
+  }
+
+  .roadmap-dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
   }
 }
 
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
+@layer utilities {
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
-}
 
-.animate-fade-up {
-  animation: fade-up 0.5s ease-out both;
-}
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out both;
+  }
 
-.animate-scale-in {
-  animation: scale-in 0.35s ease-out both;
+  .animate-scale-in {
+    animation: scale-in 0.35s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+    }
+
+    .animate-spin,
+    .animate-pulse,
+    .animate-ping,
+    .animate-bounce,
+    .animate-fade-up,
+    .animate-scale-in,
+    .planner-flow .react-flow__edge.animated path,
+    .planner-flow .react-flow__connection .animated {
+      animation: none !important;
+    }
+
+    .animate-fade-up,
+    .animate-scale-in {
+      opacity: 1;
+      transform: none !important;
+    }
+
+    button:hover,
+    button:active,
+    [role="button"]:hover,
+    [role="button"]:active,
+    .roadmap-dragging {
+      transform: none !important;
+    }
+  }
 }

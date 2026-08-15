@@ -11,7 +11,11 @@ import {
   buildStarterPromptUserPrompt,
 } from "@/lib/planner-prompt";
 import { validateEndpointUrl, sanitizeError } from "@/lib/provider-validation";
-import { briefOverviewSchema, starterPromptSchema, projectBriefSchema } from "@/lib/brief-schema";
+import {
+  briefOverviewSchema,
+  generatedProjectBriefSchema,
+  starterPromptSchema,
+} from "@/lib/brief-schema";
 
 const sectionSchema = z.enum(["overview", "starter-prompt"]);
 
@@ -23,6 +27,7 @@ const requestBodySchema = z.object({
   answers: z.record(z.string(), z.string()).optional(),
   section: sectionSchema.optional(),
   brief: z.record(z.string(), z.unknown()).optional(),
+  feedback: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -37,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { idea, baseUrl, model, apiKey, answers, section, brief } = parsed.data;
+    const { idea, baseUrl, model, apiKey, answers, section, brief, feedback } = parsed.data;
 
     const isDev = process.env.NODE_ENV === "development";
     const validation = validateEndpointUrl(baseUrl, isDev);
@@ -60,11 +65,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const parsedBrief = briefOverviewSchema.safeParse(brief);
+      if (!parsedBrief.success) {
+        return Response.json(
+          { error: "Invalid brief data.", details: parsedBrief.error.flatten().fieldErrors },
+          { status: 400 }
+        );
+      }
+
       const result = streamObject({
         model: provider(model),
         schema: starterPromptSchema,
         system: buildStarterPromptSystemPrompt(),
-        messages: [{ role: "user", content: buildStarterPromptUserPrompt(brief) }],
+        messages: [
+          { role: "user", content: buildStarterPromptUserPrompt(parsedBrief.data, feedback) },
+        ],
         temperature: 0.7,
         abortSignal: request.signal,
       });
@@ -102,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     const result = streamObject({
       model: provider(model),
-      schema: projectBriefSchema,
+      schema: generatedProjectBriefSchema,
       system: buildPlannerSystemPrompt(),
       messages: [{ role: "user", content: buildPlannerUserPrompt(idea, answers) }],
       temperature: 0.7,

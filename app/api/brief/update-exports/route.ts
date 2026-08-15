@@ -2,16 +2,16 @@ import { NextRequest } from "next/server";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { buildUpdateExportsSystemPrompt, buildUpdateExportsUserPrompt } from "@/lib/planner-prompt";
+import {
+  buildUpdateExportsSystemPrompt,
+  buildUpdateExportsUserPrompt,
+  generateMarkdownBrief,
+} from "@/lib/planner-prompt";
 import { validateEndpointUrl, sanitizeError } from "@/lib/provider-validation";
-
-const exportsSchema = z.object({
-  starterPrompt: z.string(),
-  markdownBrief: z.string(),
-});
+import { projectBriefSchema, starterPromptSchema } from "@/lib/brief-schema";
 
 const requestBodySchema = z.object({
-  brief: z.record(z.string(), z.unknown()),
+  brief: projectBriefSchema,
   baseUrl: z.string().min(1, "Base URL is required."),
   model: z.string().min(1, "Model name is required."),
   apiKey: z.string().optional(),
@@ -46,14 +46,21 @@ export async function POST(request: NextRequest) {
 
     const { object } = await generateObject({
       model: provider(model),
-      schema: exportsSchema,
+      schema: starterPromptSchema,
       system: buildUpdateExportsSystemPrompt(),
       messages: [{ role: "user", content: buildUpdateExportsUserPrompt(brief) }],
       temperature: 0.7,
+      abortSignal: request.signal,
     });
 
-    return Response.json(object);
+    return Response.json({
+      starterPrompt: object.starterPrompt,
+      markdownBrief: generateMarkdownBrief(brief),
+    });
   } catch (error) {
+    if (request.signal.aborted) {
+      return Response.json({ error: "Request cancelled." }, { status: 499 });
+    }
     console.error("Export update error:", sanitizeError(error));
     return Response.json(
       { error: "Failed to update exports.", details: sanitizeError(error) },

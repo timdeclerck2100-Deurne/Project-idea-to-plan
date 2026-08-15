@@ -1,0 +1,711 @@
+export interface Theme {
+  id: string;
+  name: string;
+  description: string;
+  /** CSS oklch values for the shadcn-style color tokens */
+  colors: {
+    background: string;
+    foreground: string;
+    card: string;
+    cardForeground: string;
+    primary: string;
+    primaryForeground: string;
+    secondary: string;
+    secondaryForeground: string;
+    muted: string;
+    mutedForeground: string;
+    accent: string;
+    accentForeground: string;
+    destructive: string;
+    destructiveForeground: string;
+    border: string;
+    ring: string;
+    input: string;
+    chart1: string;
+    chart2: string;
+    chart3: string;
+    chart4: string;
+    chart5: string;
+  };
+  /** Font family stacks */
+  fonts: {
+    body: string;
+    display: string;
+    code: string;
+  };
+  /** CSS oklch values for custom utility classes */
+  utilities: {
+    plannerBgGradient: string;
+    plannerBgGrid: string;
+    plannerBgRadial1: string;
+    plannerBgRadial2: string;
+    glassPanelBg: string;
+    glassPanelBorder: string;
+    glassPanelShadow: string;
+    glassPanelInset: string;
+    paperCardBg: string;
+    paperCardBorder: string;
+    paperCardShadow: string;
+    paperCardInset: string;
+    blueprintGrid: string;
+    blueprintBg: string;
+    blueprintBorder: string;
+    commandStripFrom: string;
+    commandStripVia: string;
+    commandStripTo: string;
+    commandStripText: string;
+    microLabelColor: string;
+  };
+  /** Preview swatch colors (hex) */
+  swatches: [string, string, string, string];
+}
+
+const FONT_SANS = 'var(--font-ibm-plex-sans), system-ui, sans-serif';
+const FONT_SERIF = 'var(--font-fraunces), Georgia, serif';
+const FONT_MONO = 'var(--font-ibm-plex-mono), ui-monospace, monospace';
+
+export const themes: Theme[] = [
+  {
+    id: "default",
+    name: "Blueprint",
+    description: "The original blueprint aesthetic with amber, teal, and purple accents",
+    colors: {
+      background: "oklch(0.17 0.055 252)",
+      foreground: "oklch(0.95 0.04 88)",
+      card: "oklch(0.22 0.06 252 / 80%)",
+      cardForeground: "oklch(0.95 0.04 88)",
+      primary: "oklch(0.80 0.19 61)",
+      primaryForeground: "oklch(0.17 0.055 252)",
+      secondary: "oklch(0.28 0.08 244 / 78%)",
+      secondaryForeground: "oklch(0.95 0.04 88)",
+      muted: "oklch(0.28 0.07 252 / 68%)",
+      mutedForeground: "oklch(0.75 0.055 88)",
+      accent: "oklch(0.79 0.16 178)",
+      accentForeground: "oklch(0.17 0.055 252)",
+      destructive: "oklch(0.70 0.23 31)",
+      destructiveForeground: "oklch(0.17 0.055 252)",
+      border: "oklch(0.98 0.02 88 / 18%)",
+      ring: "oklch(0.82 0.17 178)",
+      input: "oklch(0.98 0.02 88 / 18%)",
+      chart1: "oklch(0.80 0.19 61)",
+      chart2: "oklch(0.79 0.16 178)",
+      chart3: "oklch(0.74 0.21 290)",
+      chart4: "oklch(0.80 0.19 25)",
+      chart5: "oklch(0.74 0.18 145)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.17 0.055 252 / 70%)",
+      plannerBgGrid: "oklch(0.79 0.16 178 / 12%)",
+      plannerBgRadial1: "oklch(0.80 0.19 61 / 20%)",
+      plannerBgRadial2: "oklch(0.79 0.16 178 / 16%)",
+      glassPanelBg: "oklch(0.22 0.06 252 / 72%)",
+      glassPanelBorder: "oklch(0.98 0.02 88 / 22%)",
+      glassPanelShadow: "oklch(0.10 0.03 252 / 50%)",
+      glassPanelInset: "oklch(0.98 0.02 88 / 12%)",
+      paperCardBg: "oklch(0.22 0.06 252 / 62%)",
+      paperCardBorder: "oklch(0.98 0.02 88 / 20%)",
+      paperCardShadow: "oklch(0.10 0.03 252 / 35%)",
+      paperCardInset: "oklch(0.98 0.02 88 / 10%)",
+      blueprintGrid: "oklch(0.79 0.16 178 / 14%)",
+      blueprintBg: "oklch(0.17 0.055 252 / 85%)",
+      blueprintBorder: "oklch(0.79 0.16 178 / 20%)",
+      commandStripFrom: "oklch(0.70 0.19 55)",
+      commandStripVia: "oklch(0.80 0.14 174)",
+      commandStripTo: "oklch(0.67 0.20 290)",
+      commandStripText: "oklch(0.17 0.055 252)",
+      microLabelColor: "oklch(0.75 0.055 88)",
+    },
+    swatches: ["#d97706", "#0d9488", "#7c3aed", "#1e1b4b"],
+  },
+  {
+    id: "ocean-depths",
+    name: "Ocean Depths",
+    description: "Professional and calming maritime theme",
+    colors: {
+      background: "oklch(0.20 0.048 260)",
+      foreground: "oklch(0.96 0.025 138)",
+      card: "oklch(0.24 0.052 260 / 80%)",
+      cardForeground: "oklch(0.96 0.025 138)",
+      primary: "oklch(0.67 0.12 195)",
+      primaryForeground: "oklch(0.20 0.048 260)",
+      secondary: "oklch(0.32 0.065 260 / 78%)",
+      secondaryForeground: "oklch(0.96 0.025 138)",
+      muted: "oklch(0.30 0.058 260 / 68%)",
+      mutedForeground: "oklch(0.77 0.055 195)",
+      accent: "oklch(0.87 0.07 199)",
+      accentForeground: "oklch(0.20 0.048 260)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.20 0.048 260)",
+      border: "oklch(0.96 0.025 138 / 18%)",
+      ring: "oklch(0.62 0.12 195)",
+      input: "oklch(0.96 0.025 138 / 18%)",
+      chart1: "oklch(0.62 0.12 195)",
+      chart2: "oklch(0.87 0.07 199)",
+      chart3: "oklch(0.67 0.15 260)",
+      chart4: "oklch(0.74 0.13 180)",
+      chart5: "oklch(0.62 0.10 210)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.20 0.048 260 / 70%)",
+      plannerBgGrid: "oklch(0.62 0.12 195 / 12%)",
+      plannerBgRadial1: "oklch(0.62 0.12 195 / 20%)",
+      plannerBgRadial2: "oklch(0.87 0.07 199 / 16%)",
+      glassPanelBg: "oklch(0.24 0.052 260 / 72%)",
+      glassPanelBorder: "oklch(0.96 0.025 138 / 22%)",
+      glassPanelShadow: "oklch(0.14 0.03 260 / 50%)",
+      glassPanelInset: "oklch(0.96 0.025 138 / 12%)",
+      paperCardBg: "oklch(0.24 0.052 260 / 62%)",
+      paperCardBorder: "oklch(0.96 0.025 138 / 20%)",
+      paperCardShadow: "oklch(0.14 0.03 260 / 35%)",
+      paperCardInset: "oklch(0.96 0.025 138 / 10%)",
+      blueprintGrid: "oklch(0.62 0.12 195 / 14%)",
+      blueprintBg: "oklch(0.20 0.048 260 / 85%)",
+      blueprintBorder: "oklch(0.62 0.12 195 / 20%)",
+      commandStripFrom: "oklch(0.67 0.12 195)",
+      commandStripVia: "oklch(0.87 0.07 199)",
+      commandStripTo: "oklch(0.67 0.15 260)",
+      commandStripText: "oklch(0.20 0.048 260)",
+      microLabelColor: "oklch(0.77 0.055 195)",
+    },
+    swatches: ["#1a2332", "#2d8b8b", "#a8dadc", "#f1faee"],
+  },
+  {
+    id: "sunset-boulevard",
+    name: "Sunset Boulevard",
+    description: "Warm and vibrant sunset colors",
+    colors: {
+      background: "oklch(0.24 0.06 226)",
+      foreground: "oklch(0.94 0.07 87)",
+      card: "oklch(0.29 0.065 226 / 80%)",
+      cardForeground: "oklch(0.94 0.07 87)",
+      primary: "oklch(0.70 0.18 35)",
+      primaryForeground: "oklch(0.24 0.06 226)",
+      secondary: "oklch(0.34 0.07 226 / 78%)",
+      secondaryForeground: "oklch(0.94 0.07 87)",
+      muted: "oklch(0.32 0.062 226 / 68%)",
+      mutedForeground: "oklch(0.80 0.10 58)",
+      accent: "oklch(0.80 0.15 58)",
+      accentForeground: "oklch(0.24 0.06 226)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.22 0.06 226)",
+      border: "oklch(0.94 0.07 87 / 18%)",
+      ring: "oklch(0.80 0.15 58)",
+      input: "oklch(0.94 0.07 87 / 18%)",
+      chart1: "oklch(0.70 0.18 35)",
+      chart2: "oklch(0.80 0.15 58)",
+      chart3: "oklch(0.85 0.14 87)",
+      chart4: "oklch(0.62 0.16 20)",
+      chart5: "oklch(0.72 0.12 120)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.24 0.06 226 / 70%)",
+      plannerBgGrid: "oklch(0.70 0.18 35 / 12%)",
+      plannerBgRadial1: "oklch(0.70 0.18 35 / 20%)",
+      plannerBgRadial2: "oklch(0.80 0.15 58 / 16%)",
+      glassPanelBg: "oklch(0.29 0.065 226 / 72%)",
+      glassPanelBorder: "oklch(0.94 0.07 87 / 22%)",
+      glassPanelShadow: "oklch(0.17 0.04 226 / 50%)",
+      glassPanelInset: "oklch(0.94 0.07 87 / 12%)",
+      paperCardBg: "oklch(0.29 0.065 226 / 62%)",
+      paperCardBorder: "oklch(0.94 0.07 87 / 20%)",
+      paperCardShadow: "oklch(0.17 0.04 226 / 35%)",
+      paperCardInset: "oklch(0.94 0.07 87 / 10%)",
+      blueprintGrid: "oklch(0.70 0.18 35 / 14%)",
+      blueprintBg: "oklch(0.24 0.06 226 / 85%)",
+      blueprintBorder: "oklch(0.70 0.18 35 / 20%)",
+      commandStripFrom: "oklch(0.70 0.18 35)",
+      commandStripVia: "oklch(0.80 0.15 58)",
+      commandStripTo: "oklch(0.85 0.14 87)",
+      commandStripText: "oklch(0.24 0.06 226)",
+      microLabelColor: "oklch(0.80 0.10 58)",
+    },
+    swatches: ["#264653", "#e76f51", "#f4a261", "#e9c46a"],
+  },
+  {
+    id: "forest-canopy",
+    name: "Forest Canopy",
+    description: "Natural and grounded earth tones",
+    colors: {
+      background: "oklch(0.20 0.04 143)",
+      foreground: "oklch(0.96 0.012 91)",
+      card: "oklch(0.25 0.045 143 / 80%)",
+      cardForeground: "oklch(0.96 0.012 91)",
+      primary: "oklch(0.67 0.09 143)",
+      primaryForeground: "oklch(0.20 0.04 143)",
+      secondary: "oklch(0.30 0.05 143 / 78%)",
+      secondaryForeground: "oklch(0.96 0.012 91)",
+      muted: "oklch(0.28 0.042 143 / 68%)",
+      mutedForeground: "oklch(0.67 0.045 124)",
+      accent: "oklch(0.75 0.08 117)",
+      accentForeground: "oklch(0.20 0.04 143)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.20 0.04 143)",
+      border: "oklch(0.96 0.012 91 / 18%)",
+      ring: "oklch(0.75 0.08 117)",
+      input: "oklch(0.96 0.012 91 / 18%)",
+      chart1: "oklch(0.42 0.09 143)",
+      chart2: "oklch(0.75 0.08 117)",
+      chart3: "oklch(0.62 0.045 124)",
+      chart4: "oklch(0.57 0.10 100)",
+      chart5: "oklch(0.70 0.06 160)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.20 0.04 143 / 70%)",
+      plannerBgGrid: "oklch(0.42 0.09 143 / 12%)",
+      plannerBgRadial1: "oklch(0.42 0.09 143 / 20%)",
+      plannerBgRadial2: "oklch(0.75 0.08 117 / 16%)",
+      glassPanelBg: "oklch(0.25 0.045 143 / 72%)",
+      glassPanelBorder: "oklch(0.96 0.012 91 / 22%)",
+      glassPanelShadow: "oklch(0.14 0.03 143 / 50%)",
+      glassPanelInset: "oklch(0.96 0.012 91 / 12%)",
+      paperCardBg: "oklch(0.25 0.045 143 / 62%)",
+      paperCardBorder: "oklch(0.96 0.012 91 / 20%)",
+      paperCardShadow: "oklch(0.14 0.03 143 / 35%)",
+      paperCardInset: "oklch(0.96 0.012 91 / 10%)",
+      blueprintGrid: "oklch(0.42 0.09 143 / 14%)",
+      blueprintBg: "oklch(0.20 0.04 143 / 85%)",
+      blueprintBorder: "oklch(0.42 0.09 143 / 20%)",
+      commandStripFrom: "oklch(0.67 0.09 143)",
+      commandStripVia: "oklch(0.75 0.08 117)",
+      commandStripTo: "oklch(0.68 0.045 124)",
+      commandStripText: "oklch(0.20 0.04 143)",
+      microLabelColor: "oklch(0.67 0.045 124)",
+    },
+    swatches: ["#2d4a2b", "#7d8471", "#a4ac86", "#faf9f6"],
+  },
+  {
+    id: "modern-minimalist",
+    name: "Modern Minimalist",
+    description: "Clean and contemporary grayscale",
+    colors: {
+      background: "oklch(0.18 0.018 240)",
+      foreground: "oklch(0.97 0.008 240)",
+      card: "oklch(0.23 0.02 240 / 80%)",
+      cardForeground: "oklch(0.97 0.008 240)",
+      primary: "oklch(0.66 0.04 238)",
+      primaryForeground: "oklch(0.18 0.018 240)",
+      secondary: "oklch(0.29 0.028 240 / 78%)",
+      secondaryForeground: "oklch(0.97 0.008 240)",
+      muted: "oklch(0.27 0.022 240 / 68%)",
+      mutedForeground: "oklch(0.64 0.022 248)",
+      accent: "oklch(0.62 0.045 248)",
+      accentForeground: "oklch(0.18 0.018 240)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.18 0.018 240)",
+      border: "oklch(0.97 0.008 240 / 18%)",
+      ring: "oklch(0.62 0.045 248)",
+      input: "oklch(0.97 0.008 240 / 18%)",
+      chart1: "oklch(0.42 0.04 238)",
+      chart2: "oklch(0.62 0.045 248)",
+      chart3: "oklch(0.52 0.03 240)",
+      chart4: "oklch(0.72 0.015 240)",
+      chart5: "oklch(0.47 0.035 250)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.18 0.018 240 / 70%)",
+      plannerBgGrid: "oklch(0.42 0.04 238 / 12%)",
+      plannerBgRadial1: "oklch(0.42 0.04 238 / 20%)",
+      plannerBgRadial2: "oklch(0.62 0.045 248 / 16%)",
+      glassPanelBg: "oklch(0.23 0.02 240 / 72%)",
+      glassPanelBorder: "oklch(0.97 0.008 240 / 22%)",
+      glassPanelShadow: "oklch(0.12 0.015 240 / 50%)",
+      glassPanelInset: "oklch(0.97 0.008 240 / 12%)",
+      paperCardBg: "oklch(0.23 0.02 240 / 62%)",
+      paperCardBorder: "oklch(0.97 0.008 240 / 20%)",
+      paperCardShadow: "oklch(0.12 0.015 240 / 35%)",
+      paperCardInset: "oklch(0.97 0.008 240 / 10%)",
+      blueprintGrid: "oklch(0.42 0.04 238 / 14%)",
+      blueprintBg: "oklch(0.18 0.018 240 / 85%)",
+      blueprintBorder: "oklch(0.42 0.04 238 / 20%)",
+      commandStripFrom: "oklch(0.42 0.04 238)",
+      commandStripVia: "oklch(0.48 0.045 248)",
+      commandStripTo: "oklch(0.46 0.03 240)",
+      commandStripText: "oklch(0.97 0.008 240)",
+      microLabelColor: "oklch(0.64 0.022 248)",
+    },
+    swatches: ["#36454f", "#708090", "#d3d3d3", "#ffffff"],
+  },
+  {
+    id: "golden-hour",
+    name: "Golden Hour",
+    description: "Rich and warm autumnal palette",
+    colors: {
+      background: "oklch(0.24 0.03 53)",
+      foreground: "oklch(0.94 0.045 72)",
+      card: "oklch(0.29 0.035 53 / 80%)",
+      cardForeground: "oklch(0.94 0.045 72)",
+      primary: "oklch(0.81 0.19 77)",
+      primaryForeground: "oklch(0.24 0.03 53)",
+      secondary: "oklch(0.32 0.042 53 / 78%)",
+      secondaryForeground: "oklch(0.94 0.045 72)",
+      muted: "oklch(0.30 0.035 53 / 68%)",
+      mutedForeground: "oklch(0.74 0.08 18)",
+      accent: "oklch(0.67 0.14 18)",
+      accentForeground: "oklch(0.24 0.03 53)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.24 0.03 53)",
+      border: "oklch(0.94 0.045 72 / 18%)",
+      ring: "oklch(0.64 0.14 18)",
+      input: "oklch(0.94 0.045 72 / 18%)",
+      chart1: "oklch(0.81 0.19 77)",
+      chart2: "oklch(0.64 0.14 18)",
+      chart3: "oklch(0.82 0.07 72)",
+      chart4: "oklch(0.57 0.12 30)",
+      chart5: "oklch(0.70 0.10 90)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.24 0.03 53 / 70%)",
+      plannerBgGrid: "oklch(0.81 0.19 77 / 12%)",
+      plannerBgRadial1: "oklch(0.81 0.19 77 / 20%)",
+      plannerBgRadial2: "oklch(0.64 0.14 18 / 16%)",
+      glassPanelBg: "oklch(0.29 0.035 53 / 72%)",
+      glassPanelBorder: "oklch(0.94 0.045 72 / 22%)",
+      glassPanelShadow: "oklch(0.17 0.025 53 / 50%)",
+      glassPanelInset: "oklch(0.94 0.045 72 / 12%)",
+      paperCardBg: "oklch(0.29 0.035 53 / 62%)",
+      paperCardBorder: "oklch(0.94 0.045 72 / 20%)",
+      paperCardShadow: "oklch(0.17 0.025 53 / 35%)",
+      paperCardInset: "oklch(0.94 0.045 72 / 10%)",
+      blueprintGrid: "oklch(0.81 0.19 77 / 14%)",
+      blueprintBg: "oklch(0.24 0.03 53 / 85%)",
+      blueprintBorder: "oklch(0.81 0.19 77 / 20%)",
+      commandStripFrom: "oklch(0.81 0.19 77)",
+      commandStripVia: "oklch(0.64 0.14 18)",
+      commandStripTo: "oklch(0.82 0.07 72)",
+      commandStripText: "oklch(0.24 0.03 53)",
+      microLabelColor: "oklch(0.74 0.08 18)",
+    },
+    swatches: ["#4a403a", "#f4a900", "#c1666b", "#d4b896"],
+  },
+  {
+    id: "arctic-frost",
+    name: "Arctic Frost",
+    description: "Cool and crisp winter-inspired theme",
+    colors: {
+      background: "oklch(0.19 0.032 258)",
+      foreground: "oklch(0.96 0.02 253)",
+      card: "oklch(0.24 0.038 258 / 80%)",
+      cardForeground: "oklch(0.96 0.02 253)",
+      primary: "oklch(0.62 0.12 258)",
+      primaryForeground: "oklch(0.19 0.032 258)",
+      secondary: "oklch(0.30 0.042 258 / 78%)",
+      secondaryForeground: "oklch(0.96 0.02 253)",
+      muted: "oklch(0.28 0.035 258 / 68%)",
+      mutedForeground: "oklch(0.70 0.042 258)",
+      accent: "oklch(0.82 0.05 258)",
+      accentForeground: "oklch(0.19 0.032 258)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.19 0.032 258)",
+      border: "oklch(0.96 0.02 253 / 18%)",
+      ring: "oklch(0.58 0.12 258)",
+      input: "oklch(0.96 0.02 253 / 18%)",
+      chart1: "oklch(0.58 0.12 258)",
+      chart2: "oklch(0.82 0.05 258)",
+      chart3: "oklch(0.62 0.08 258)",
+      chart4: "oklch(0.72 0.06 240)",
+      chart5: "oklch(0.52 0.10 270)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.19 0.032 258 / 70%)",
+      plannerBgGrid: "oklch(0.58 0.12 258 / 12%)",
+      plannerBgRadial1: "oklch(0.58 0.12 258 / 20%)",
+      plannerBgRadial2: "oklch(0.82 0.05 258 / 16%)",
+      glassPanelBg: "oklch(0.24 0.038 258 / 72%)",
+      glassPanelBorder: "oklch(0.96 0.02 253 / 22%)",
+      glassPanelShadow: "oklch(0.14 0.025 258 / 50%)",
+      glassPanelInset: "oklch(0.96 0.02 253 / 12%)",
+      paperCardBg: "oklch(0.24 0.038 258 / 62%)",
+      paperCardBorder: "oklch(0.96 0.02 253 / 20%)",
+      paperCardShadow: "oklch(0.14 0.025 258 / 35%)",
+      paperCardInset: "oklch(0.96 0.02 253 / 10%)",
+      blueprintGrid: "oklch(0.58 0.12 258 / 14%)",
+      blueprintBg: "oklch(0.19 0.032 258 / 85%)",
+      blueprintBorder: "oklch(0.58 0.12 258 / 20%)",
+      commandStripFrom: "oklch(0.62 0.12 258)",
+      commandStripVia: "oklch(0.82 0.05 258)",
+      commandStripTo: "oklch(0.66 0.08 258)",
+      commandStripText: "oklch(0.19 0.032 258)",
+      microLabelColor: "oklch(0.70 0.042 258)",
+    },
+    swatches: ["#4a6fa5", "#c0c0c0", "#d4e4f7", "#fafafa"],
+  },
+  {
+    id: "desert-rose",
+    name: "Desert Rose",
+    description: "Soft and sophisticated dusty tones",
+    colors: {
+      background: "oklch(0.24 0.065 350)",
+      foreground: "oklch(0.94 0.045 55)",
+      card: "oklch(0.29 0.07 350 / 80%)",
+      cardForeground: "oklch(0.94 0.045 55)",
+      primary: "oklch(0.79 0.08 18)",
+      primaryForeground: "oklch(0.24 0.065 350)",
+      secondary: "oklch(0.32 0.065 350 / 78%)",
+      secondaryForeground: "oklch(0.94 0.045 55)",
+      muted: "oklch(0.30 0.058 350 / 68%)",
+      mutedForeground: "oklch(0.70 0.065 18)",
+      accent: "oklch(0.67 0.10 36)",
+      accentForeground: "oklch(0.24 0.065 350)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.24 0.065 350)",
+      border: "oklch(0.94 0.045 55 / 18%)",
+      ring: "oklch(0.67 0.10 36)",
+      input: "oklch(0.94 0.045 55 / 18%)",
+      chart1: "oklch(0.79 0.08 18)",
+      chart2: "oklch(0.67 0.10 36)",
+      chart3: "oklch(0.90 0.04 64)",
+      chart4: "oklch(0.57 0.10 350)",
+      chart5: "oklch(0.72 0.065 25)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.24 0.065 350 / 70%)",
+      plannerBgGrid: "oklch(0.79 0.08 18 / 12%)",
+      plannerBgRadial1: "oklch(0.79 0.08 18 / 20%)",
+      plannerBgRadial2: "oklch(0.67 0.10 36 / 16%)",
+      glassPanelBg: "oklch(0.29 0.07 350 / 72%)",
+      glassPanelBorder: "oklch(0.94 0.045 55 / 22%)",
+      glassPanelShadow: "oklch(0.17 0.05 350 / 50%)",
+      glassPanelInset: "oklch(0.94 0.045 55 / 12%)",
+      paperCardBg: "oklch(0.29 0.07 350 / 62%)",
+      paperCardBorder: "oklch(0.94 0.045 55 / 20%)",
+      paperCardShadow: "oklch(0.17 0.05 350 / 35%)",
+      paperCardInset: "oklch(0.94 0.045 55 / 10%)",
+      blueprintGrid: "oklch(0.79 0.08 18 / 14%)",
+      blueprintBg: "oklch(0.24 0.065 350 / 85%)",
+      blueprintBorder: "oklch(0.79 0.08 18 / 20%)",
+      commandStripFrom: "oklch(0.79 0.08 18)",
+      commandStripVia: "oklch(0.67 0.10 36)",
+      commandStripTo: "oklch(0.90 0.04 64)",
+      commandStripText: "oklch(0.24 0.065 350)",
+      microLabelColor: "oklch(0.70 0.065 18)",
+    },
+    swatches: ["#5d2e46", "#d4a5a5", "#b87d6d", "#e8d5c4"],
+  },
+  {
+    id: "tech-innovation",
+    name: "Tech Innovation",
+    description: "Bold and modern tech aesthetic",
+    colors: {
+      background: "oklch(0.16 0.018 260)",
+      foreground: "oklch(0.99 0.008 260)",
+      card: "oklch(0.21 0.022 260 / 80%)",
+      cardForeground: "oklch(0.99 0.008 260)",
+      primary: "oklch(0.65 0.28 261)",
+      primaryForeground: "oklch(0.16 0.018 260)",
+      secondary: "oklch(0.24 0.03 260 / 78%)",
+      secondaryForeground: "oklch(0.99 0.008 260)",
+      muted: "oklch(0.22 0.025 260 / 68%)",
+      mutedForeground: "oklch(0.67 0.065 260)",
+      accent: "oklch(0.93 0.18 195)",
+      accentForeground: "oklch(0.16 0.018 260)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.16 0.018 260)",
+      border: "oklch(0.99 0.008 260 / 18%)",
+      ring: "oklch(0.60 0.28 261)",
+      input: "oklch(0.99 0.008 260 / 18%)",
+      chart1: "oklch(0.60 0.28 261)",
+      chart2: "oklch(0.93 0.18 195)",
+      chart3: "oklch(0.67 0.21 290)",
+      chart4: "oklch(0.72 0.23 240)",
+      chart5: "oklch(0.62 0.18 210)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.16 0.018 260 / 70%)",
+      plannerBgGrid: "oklch(0.60 0.28 261 / 12%)",
+      plannerBgRadial1: "oklch(0.60 0.28 261 / 20%)",
+      plannerBgRadial2: "oklch(0.93 0.18 195 / 16%)",
+      glassPanelBg: "oklch(0.21 0.022 260 / 72%)",
+      glassPanelBorder: "oklch(0.99 0.008 260 / 22%)",
+      glassPanelShadow: "oklch(0.10 0.015 260 / 50%)",
+      glassPanelInset: "oklch(0.99 0.008 260 / 12%)",
+      paperCardBg: "oklch(0.21 0.022 260 / 62%)",
+      paperCardBorder: "oklch(0.99 0.008 260 / 20%)",
+      paperCardShadow: "oklch(0.10 0.015 260 / 35%)",
+      paperCardInset: "oklch(0.99 0.008 260 / 10%)",
+      blueprintGrid: "oklch(0.60 0.28 261 / 14%)",
+      blueprintBg: "oklch(0.16 0.018 260 / 85%)",
+      blueprintBorder: "oklch(0.60 0.28 261 / 20%)",
+      commandStripFrom: "oklch(0.65 0.28 261)",
+      commandStripVia: "oklch(0.93 0.18 195)",
+      commandStripTo: "oklch(0.67 0.21 290)",
+      commandStripText: "oklch(0.16 0.018 260)",
+      microLabelColor: "oklch(0.67 0.065 260)",
+    },
+    swatches: ["#1e1e1e", "#0066ff", "#00ffff", "#ffffff"],
+  },
+  {
+    id: "botanical-garden",
+    name: "Botanical Garden",
+    description: "Fresh and organic garden colors",
+    colors: {
+      background: "oklch(0.20 0.042 153)",
+      foreground: "oklch(0.96 0.012 91)",
+      card: "oklch(0.25 0.048 153 / 80%)",
+      cardForeground: "oklch(0.96 0.012 91)",
+      primary: "oklch(0.62 0.10 153)",
+      primaryForeground: "oklch(0.20 0.042 153)",
+      secondary: "oklch(0.30 0.055 153 / 78%)",
+      secondaryForeground: "oklch(0.96 0.012 91)",
+      muted: "oklch(0.27 0.048 153 / 68%)",
+      mutedForeground: "oklch(0.67 0.065 153)",
+      accent: "oklch(0.81 0.19 72)",
+      accentForeground: "oklch(0.20 0.042 153)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.20 0.042 153)",
+      border: "oklch(0.96 0.012 91 / 18%)",
+      ring: "oklch(0.58 0.10 153)",
+      input: "oklch(0.96 0.012 91 / 18%)",
+      chart1: "oklch(0.58 0.10 153)",
+      chart2: "oklch(0.81 0.19 72)",
+      chart3: "oklch(0.48 0.18 18)",
+      chart4: "oklch(0.67 0.12 100)",
+      chart5: "oklch(0.62 0.10 140)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.20 0.042 153 / 70%)",
+      plannerBgGrid: "oklch(0.58 0.10 153 / 12%)",
+      plannerBgRadial1: "oklch(0.58 0.10 153 / 20%)",
+      plannerBgRadial2: "oklch(0.81 0.19 72 / 16%)",
+      glassPanelBg: "oklch(0.25 0.048 153 / 72%)",
+      glassPanelBorder: "oklch(0.96 0.012 91 / 22%)",
+      glassPanelShadow: "oklch(0.14 0.03 153 / 50%)",
+      glassPanelInset: "oklch(0.96 0.012 91 / 12%)",
+      paperCardBg: "oklch(0.25 0.048 153 / 62%)",
+      paperCardBorder: "oklch(0.96 0.012 91 / 20%)",
+      paperCardShadow: "oklch(0.14 0.03 153 / 35%)",
+      paperCardInset: "oklch(0.96 0.012 91 / 10%)",
+      blueprintGrid: "oklch(0.58 0.10 153 / 14%)",
+      blueprintBg: "oklch(0.20 0.042 153 / 85%)",
+      blueprintBorder: "oklch(0.58 0.10 153 / 20%)",
+      commandStripFrom: "oklch(0.62 0.10 153)",
+      commandStripVia: "oklch(0.81 0.19 72)",
+      commandStripTo: "oklch(0.65 0.18 18)",
+      commandStripText: "oklch(0.20 0.042 153)",
+      microLabelColor: "oklch(0.67 0.065 153)",
+    },
+    swatches: ["#b7472a", "#4a7c59", "#f9a620", "#f5f3ed"],
+  },
+  {
+    id: "midnight-galaxy",
+    name: "Midnight Galaxy",
+    description: "Dramatic and cosmic deep tones",
+    colors: {
+      background: "oklch(0.20 0.06 301)",
+      foreground: "oklch(0.92 0.035 286)",
+      card: "oklch(0.25 0.065 301 / 80%)",
+      cardForeground: "oklch(0.92 0.035 286)",
+      primary: "oklch(0.68 0.08 301)",
+      primaryForeground: "oklch(0.20 0.06 301)",
+      secondary: "oklch(0.26 0.07 301 / 78%)",
+      secondaryForeground: "oklch(0.92 0.035 286)",
+      muted: "oklch(0.27 0.065 301 / 68%)",
+      mutedForeground: "oklch(0.70 0.08 279)",
+      accent: "oklch(0.67 0.13 279)",
+      accentForeground: "oklch(0.20 0.06 301)",
+      destructive: "oklch(0.71 0.22 25)",
+      destructiveForeground: "oklch(0.20 0.06 301)",
+      border: "oklch(0.92 0.035 286 / 18%)",
+      ring: "oklch(0.71 0.095 303)",
+      input: "oklch(0.92 0.035 286 / 18%)",
+      chart1: "oklch(0.30 0.08 301)",
+      chart2: "oklch(0.48 0.13 279)",
+      chart3: "oklch(0.71 0.095 303)",
+      chart4: "oklch(0.57 0.14 290)",
+      chart5: "oklch(0.52 0.11 310)",
+    },
+    fonts: { body: FONT_SANS, display: FONT_SERIF, code: FONT_MONO },
+    utilities: {
+      plannerBgGradient: "oklch(0.20 0.06 301 / 70%)",
+      plannerBgGrid: "oklch(0.48 0.13 279 / 12%)",
+      plannerBgRadial1: "oklch(0.30 0.08 301 / 20%)",
+      plannerBgRadial2: "oklch(0.71 0.095 303 / 16%)",
+      glassPanelBg: "oklch(0.25 0.065 301 / 72%)",
+      glassPanelBorder: "oklch(0.92 0.035 286 / 22%)",
+      glassPanelShadow: "oklch(0.14 0.04 301 / 50%)",
+      glassPanelInset: "oklch(0.92 0.035 286 / 12%)",
+      paperCardBg: "oklch(0.25 0.065 301 / 62%)",
+      paperCardBorder: "oklch(0.92 0.035 286 / 20%)",
+      paperCardShadow: "oklch(0.14 0.04 301 / 35%)",
+      paperCardInset: "oklch(0.92 0.035 286 / 10%)",
+      blueprintGrid: "oklch(0.48 0.13 279 / 14%)",
+      blueprintBg: "oklch(0.20 0.06 301 / 85%)",
+      blueprintBorder: "oklch(0.48 0.13 279 / 20%)",
+      commandStripFrom: "oklch(0.48 0.13 279)",
+      commandStripVia: "oklch(0.30 0.08 301)",
+      commandStripTo: "oklch(0.48 0.095 303)",
+      commandStripText: "oklch(0.92 0.035 286)",
+      microLabelColor: "oklch(0.70 0.08 279)",
+    },
+    swatches: ["#2b1e3e", "#4a4e8f", "#a490c2", "#e6e6fa"],
+  },
+];
+
+export const THEME_STORAGE_KEY = "planner-theme";
+
+export function getThemeById(id: string): Theme {
+  return themes.find((t) => t.id === id) ?? themes[0];
+}
+
+export function buildThemeStyleString(theme: Theme): string {
+  const c = theme.colors;
+  const u = theme.utilities;
+  const f = theme.fonts;
+  return `
+:root {
+  --background: ${c.background};
+  --foreground: ${c.foreground};
+  --card: ${c.card};
+  --card-foreground: ${c.cardForeground};
+  --primary: ${c.primary};
+  --primary-foreground: ${c.primaryForeground};
+  --secondary: ${c.secondary};
+  --secondary-foreground: ${c.secondaryForeground};
+  --muted: ${c.muted};
+  --muted-foreground: ${c.mutedForeground};
+  --accent: ${c.accent};
+  --accent-foreground: ${c.accentForeground};
+  --destructive: ${c.destructive};
+  --destructive-foreground: ${c.destructiveForeground};
+  --border: ${c.border};
+  --ring: ${c.ring};
+  --input: ${c.input};
+  --chart-1: ${c.chart1};
+  --chart-2: ${c.chart2};
+  --chart-3: ${c.chart3};
+  --chart-4: ${c.chart4};
+  --chart-5: ${c.chart5};
+  --font-body: ${f.body};
+  --font-display-family: ${f.display};
+  --font-code: ${f.code};
+  --ut-planner-gradient: ${u.plannerBgGradient};
+  --ut-planner-grid: ${u.plannerBgGrid};
+  --ut-planner-radial1: ${u.plannerBgRadial1};
+  --ut-planner-radial2: ${u.plannerBgRadial2};
+  --ut-glass-bg: ${u.glassPanelBg};
+  --ut-glass-border: ${u.glassPanelBorder};
+  --ut-glass-shadow: ${u.glassPanelShadow};
+  --ut-glass-inset: ${u.glassPanelInset};
+  --ut-paper-bg: ${u.paperCardBg};
+  --ut-paper-border: ${u.paperCardBorder};
+  --ut-paper-shadow: ${u.paperCardShadow};
+  --ut-paper-inset: ${u.paperCardInset};
+  --ut-bp-grid: ${u.blueprintGrid};
+  --ut-bp-bg: ${u.blueprintBg};
+  --ut-bp-border: ${u.blueprintBorder};
+  --ut-cmd-from: ${u.commandStripFrom};
+  --ut-cmd-via: ${u.commandStripVia};
+  --ut-cmd-to: ${u.commandStripTo};
+  --ut-cmd-text: ${u.commandStripText};
+  --ut-micro-color: ${u.microLabelColor};
+}`;
+}

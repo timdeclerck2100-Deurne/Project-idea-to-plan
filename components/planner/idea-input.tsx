@@ -12,17 +12,19 @@ interface IdeaInputProps {
 
 export function IdeaInput({ value, onChange, disabled }: IdeaInputProps) {
   return (
-    <div className="space-y-1 h-full flex flex-col">
+    <div className="flex h-full flex-col gap-1">
       <Label htmlFor="idea" className="micro-label">
         App Idea
       </Label>
       <Textarea
         id="idea"
-        placeholder="Describe your app idea..."
+        name="idea"
+        autoComplete="off"
+        placeholder="Describe your app idea…"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="flex-1 min-h-[80px] resize-none text-sm"
+        className="min-h-[80px] flex-1 resize-none"
       />
     </div>
   );
